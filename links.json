@@ -1,0 +1,122 @@
+[
+  {
+    "name": "Search",
+    "url": "http://10.10.22.80",
+    "category": "media"
+  },
+  {
+    "name": "IT Tools",
+    "url": "http://10.10.11.11:8082",
+    "category": "media"
+  },
+  {
+    "name": "Proxmox",
+    "url": "http://10.10.11.12:8006",
+    "category": "servers"
+  },
+  {
+    "name": "Immich",
+    "url": "http://10.10.11.11:2283",
+    "category": "media"
+  },
+  {
+    "name": "Home Assistant",
+    "url": "http://10.10.11.15:8123",
+    "category": "servers"
+  },
+  {
+    "name": "JellyFin",
+    "url": "http://10.10.11.11:8096",
+    "category": "media"
+  },
+  {
+    "name": "Plex",
+    "url": "http://10.10.11.11:32400/web",
+    "category": "media"
+  },
+  {
+    "name": "TrueNAS",
+    "url": "http://10.10.22.10",
+    "category": "servers"
+  },
+  {
+    "name": "Subscriptions",
+    "url": "http://10.10.11.11:8412",
+    "category": "media"
+  },
+  {
+    "name": "N8N",
+    "url": "http://10.10.11.11:5678",
+    "category": "media"
+  },
+  {
+    "name": "PDF",
+    "url": "http://10.10.11.11:61440",
+    "category": "media"
+  },
+  {
+    "name": "Pihole",
+    "url": "http://10.10.11.10/admin",
+    "category": "servers"
+  },
+  {
+    "name": "Docker",
+    "url": "http://10.10.11.11:9000/",
+    "category": "infrastructure"
+  },
+  {
+    "name": "HP Laser",
+    "url": "http://10.10.11.178",
+    "category": "infrastructure"
+  },
+  {
+    "name": "Guacamole",
+    "url": "http://10.10.22.26:8080/guacamole/",
+    "category": "infrastructure"
+  },
+  {
+    "name": "Grafana",
+    "url": "http://10.10.11.11:6720/d/eebybtwr0yvi8b/unifi-performance?orgId=1&from=now-6h&to=now&timezone=browser&tab=queries",
+    "category": "media"
+  },
+  {
+    "name": "Sudoku Solver",
+    "url": "http://10.10.11.11/sudoku.html",
+    "category": "media"
+  },
+  {
+    "name": "Netboot",
+    "url": "http://10.10.11.11:3014",
+    "category": "servers"
+  },
+  {
+    "name": "Mame Layouts",
+    "url": "http://10.10.11.11/mame_layouts.html",
+    "category": "media"
+  },
+  {
+    "name": "CASA OS",
+    "url": "http://10.10.11.197",
+    "category": "servers"
+  },
+  {
+    "name": "Homebridge",
+    "url": "http://10.10.11.11:8581/login",
+    "category": "servers"
+  },
+  {
+    "name": "Proxy Manager",
+    "url": "http://10.10.22.22:81",
+    "category": "servers"
+  },
+  {
+    "name": "Syncthing RPI",
+    "url": "http://rpi5.local:8384",
+    "category": "infrastructure"
+  },
+  {
+    "name": "Unifi - 10.10.11.1",
+    "url": "http://10.10.11.1",
+    "category": "infrastructure"
+  }
+]

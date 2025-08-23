@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPDT Switch Circuit Diagram</title>
+    <!-- Import Mermaid from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    <style>
+        .diagram-container {
+            width: 80%;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="diagram-container">
+        <h1>DPDT Switch Circuit with LED Indicator</h1>
+        <div class="mermaid">
+            graph LR
+                V[Power Supply] -- + --- SW1((DPDT Switch))
+                SW1 -- Position 1 --- LED[LED]
+                LED --- R[Resistor] --- T[Transparent] --- GND1[GND]
+                SW1 -- Position 2 --- S1[Signal Out]
+                V -- - --- GND2[GND]
+                GND1 --- GND2 --- GND3
+
+                classDef component fill:#f9f,stroke:#333,stroke-width:2px
+                class V,LED,R component
+                classDef switch fill:#9ff,stroke:#333,stroke-width:2px
+                class SW1 switch
+                classDef ground fill:#000,color:#fff,stroke:#333,stroke-width:2px
+                class GND1,GND2 ground
+        </div>
+    </div>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose'
+        });
+    </script>
+</body>
+</html>

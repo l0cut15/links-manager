@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Sudoku Solver</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .instructions {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #666;
+        }
+        .grid-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        .grid-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .grid-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+            gap: 1px;
+            background-color: #333;
+            border: 2px solid #333;
+            width: 360px;
+            height: 360px;
+            margin-bottom: 20px;
+        }
+        .cell {
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: bold;
+            width: 100%;
+            height: 100%;
+            transition: all 0.2s ease;
+        }
+        .cell.editable {
+            cursor: pointer;
+        }
+        .cell.editable:hover {
+            background-color: #f0f8ff;
+        }
+        .cell.selected {
+            background-color: #e3f2fd;
+        }
+        .original {
+            color: #2c3e50;
+        }
+        .solved {
+            color: #2ecc71;
+        }
+        .error {
+            color: #e74c3c !important;
+        }
+        .cell:nth-child(3n) {
+            border-right: 2px solid #333;
+        }
+        .cell:nth-child(9n) {
+            border-right: none;
+        }
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54),
+        .cell:nth-child(n+73):nth-child(-n+81) {
+            border-bottom: 2px solid #333;
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .solve-btn {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .solve-btn:hover {
+            background-color: #27ae60;
+        }
+        .reset-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .reset-btn:hover {
+            background-color: #c0392b;
+        }
+        .clear-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        .clear-btn:hover {
+            background-color: #2980b9;
+        }
+        .number-pad {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+            margin: 20px auto;
+            width: 300px;
+        }
+        .number-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .number-btn:hover {
+            background-color: #e3f2fd;
+        }
+        .number-btn.active {
+            background-color: #2980b9;
+            color: white;
+        }
+        .message {
+            text-align: center;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            display: none;
+        }
+        .error-message {
+            background-color: #ffecec;
+            color: #e74c3c;
+            border: 1px solid #f5aca6;
+        }
+        .success-message {
+            background-color: #e7f9e7;
+            color: #2ecc71;
+            border: 1px solid #a6f5c6;
+        }
+        .timer {
+            text-align: center;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .sample-puzzles {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .sample-puzzle-btn {
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .sample-puzzle-btn:hover {
+            background-color: #e3f2fd;
+        }
+        @media (max-width: 768px) {
+            .grid-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .sudoku-grid {
+                width: 300px;
+                height: 300px;
+            }
+            .cell {
+                font-size: 18px;
+            }
+            .number-pad {
+                width: 250px;
+            }
+            .number-btn {
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Manual Sudoku Solver</h1>
+        
+        <div class="instructions">
+            <p>Click on a cell in the grid and use the number pad below to enter numbers.</p>
+            <p>Leave cells empty (or use 0) for blank spaces in the puzzle.</p>
+        </div>
+        
+        <div class="sample-puzzles">
+            <p>Try these sample puzzles:</p>
+            <button class="sample-puzzle-btn" data-difficulty="easy">Easy</button>
+            <button class="sample-puzzle-btn" data-difficulty="medium">Medium</button>
+            <button class="sample-puzzle-btn" data-difficulty="hard">Hard</button>
+        </div>
+        
+        <div class="message error-message" id="error-message"></div>
+        <div class="message success-message" id="success-message"></div>
+        
+        <div class="grid-container">
+            <div class="grid-wrapper">
+                <div class="grid-title">Original Puzzle</div>
+                <div class="sudoku-grid" id="original-grid"></div>
+            </div>
+            <div class="grid-wrapper">
+                <div class="grid-title">Solved Puzzle</div>
+                <div class="sudoku-grid" id="solved-grid"></div>
+            </div>
+        </div>
+        
+        <div class="number-pad" id="number-pad">
+            <div class="number-btn" data-value="1">1</div>
+            <div class="number-btn" data-value="2">2</div>
+            <div class="number-btn" data-value="3">3</div>
+            <div class="number-btn" data-value="4">4</div>
+            <div class="number-btn" data-value="5">5</div>
+            <div class="number-btn" data-value="6">6</div>
+            <div class="number-btn" data-value="7">7</div>
+            <div class="number-btn" data-value="8">8</div>
+            <div class="number-btn" data-value="9">9</div>
+            <div class="number-btn" data-value="0">Clear</div>
+        </div>
+        
+        <div class="buttons">
+            <button class="solve-btn" id="solve-btn">Solve Puzzle</button>
+            <button class="clear-btn" id="clear-btn">Clear All</button>
+            <button class="reset-btn" id="reset-btn">Reset Solution</button>
+        </div>
+        
+        <div class="timer" id="timer">Solution time: 0.0s</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const originalGrid = document.getElementById('original-grid');
+            const solvedGrid = document.getElementById('solved-grid');
+            const numberPad = document.getElementById('number-pad');
+            const solveBtn = document.getElementById('solve-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+            const timerElement = document.getElementById('timer');
+            const sampleButtons = document.querySelectorAll('.sample-puzzle-btn');
+            
+            // Variables
+            let originalPuzzle = Array(9).fill().map(() => Array(9).fill(0));
+            let solvedPuzzle = Array(9).fill().map(() => Array(9).fill(0));
+            let selectedCell = null;
+            let solveStartTime = null;
+            
+            // Initialize grids
+            initializeGrids();
+            
+            // Event listeners
+            solveBtn.addEventListener('click', solvePuzzle);
+            clearBtn.addEventListener('click', clearGrid);
+            resetBtn.addEventListener('click', resetSolution);
+            
+            // Number pad functionality
+            numberPad.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('number-btn')) return;
+                
+                const value = parseInt(e.target.dataset.value);
+                
+                if (selectedCell) {
+                    const row = parseInt(selectedCell.dataset.row);
+                    const col = parseInt(selectedCell.dataset.col);
+                    
+                    // Update the cell and puzzle data
+                    if (value === 0) {
+                        selectedCell.textContent = '';
+                        originalPuzzle[row][col] = 0;
+                    } else {
+                        selectedCell.textContent = value;
+                        originalPuzzle[row][col] = value;
+                    }
+                    
+                    // Validate the entry
+                    validateEntry(row, col, value);
+                }
+            });
+            
+            // Sample puzzle buttons
+            sampleButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const difficulty = this.dataset.difficulty;
+                    loadSamplePuzzle(difficulty);
+                });
+            });
+            
+            // Initialize grids
+            function initializeGrids() {
+                originalGrid.innerHTML = '';
+                solvedGrid.innerHTML = '';
+                
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        // Original grid cell (editable)
+                        const originalCell = document.createElement('div');
+                        originalCell.className = 'cell original editable';
+                        originalCell.dataset.row = i;
+                        originalCell.dataset.col = j;
+                        originalGrid.appendChild(originalCell);
+                        
+                        // Cell click handler
+                        originalCell.addEventListener('click', function() {
+                            // Deselect previously selected cell
+                            if (selectedCell) {
+                                selectedCell.classList.remove('selected');
+                            }
+                            
+                            // Select this cell
+                            this.classList.add('selected');
+                            selectedCell = this;
+                        });
+                        
+                        // Solved grid cell (display only)
+                        const solvedCell = document.createElement('div');
+                        solvedCell.className = 'cell solved';
+                        solvedCell.dataset.row = i;
+                        solvedCell.dataset.col = j;
+                        solvedGrid.appendChild(solvedCell);
+                    }
+                }
+            }
+            
+            // Validate an entry to show immediate feedback
+            function validateEntry(row, col, value) {
+                // Clear any previous error styles
+                clearErrorStyles();
+                
+                // Skip validation for empty cells (value 0)
+                if (value === 0) return;
+                
+                // Check row
+                for (let i = 0; i < 9; i++) {
+                    if (i !== col && originalPuzzle[row][i] === value) {
+                        markError(row, i, row, col);
+                        return;
+                    }
+                }
+                
+                // Check column
+                for (let i = 0; i < 9; i++) {
+                    if (i !== row && originalPuzzle[i][col] === value) {
+                        markError(i, col, row, col);
+                        return;
+                    }
+                }
+                
+                // Check 3x3 box
+                const boxRow = Math.floor(row / 3) * 3;
+                const boxCol = Math.floor(col / 3) * 3;
+                
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        const r = boxRow + i;
+                        const c = boxCol + j;
+                        if (r !== row || c !== col) {
+                            if (originalPuzzle[r][c] === value) {
+                                markError(r, c, row, col);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Mark error cells
+            function markError(row1, col1, row2, col2) {
+                const cell1 = originalGrid.querySelector(`[data-row="${row1}"][data-col="${col1}"]`);
+                const cell2 = originalGrid.querySelector(`[data-row="${row2}"][data-col="${col2}"]`);
+                
+                cell1.classList.add('error');
+                cell2.classList.add('error');
+            }
+            
+            // Clear error styles
+            function clearErrorStyles() {
+                const errorCells = originalGrid.querySelectorAll('.error');
+                errorCells.forEach(cell => {
+                    cell.classList.remove('error');
+                });
+            }
+            
+            // Solve the puzzle
+            function solvePuzzle() {
+                // Clear any previous messages and errors
+                showMessage('', '');
+                clearErrorStyles();
+                
+                // Check if the input puzzle is valid
+                if (!isValidPuzzle()) {
+                    showMessage('The puzzle contains errors. Please fix them before solving.', '');
+                    return;
+                }
+                
+                // Start timer
+                solveStartTime = performance.now();
+                
+                // Clone the original puzzle
+                const puzzleToSolve = originalPuzzle.map(row => [...row]);
+                
+                // Solve the puzzle
+                const solved = solveSudoku(puzzleToSolve);
+                
+                // Stop timer
+                const solveEndTime = performance.now();
+                const solveTime = ((solveEndTime - solveStartTime) / 1000).toFixed(2);
+                timerElement.textContent = `Solution time: ${solveTime}s`;
+                
+                if (solved) {
+                    solvedPuzzle = solved;
+                    updateSolvedGrid();
+                    showMessage('', 'Puzzle solved successfully!');
+                } else {
+                    showMessage('Unable to solve the puzzle. The puzzle may be invalid or have no solution.', '');
+                }
+            }
+            
+            // Check if the puzzle is valid (no conflicts)
+            function isValidPuzzle() {
+                // Check rows
+                for (let row = 0; row < 9; row++) {
+                    const seen = new Set();
+                    for (let col = 0; col < 9; col++) {
+                        const value = originalPuzzle[row][col];
+                        if (value !== 0) {
+                            if (seen.has(value)) {
+                                markError(row, seen.getIndex(value), row, col);
+                                return false;
+                            }
+                            seen.add(value);
+                        }
+                    }
+                }
+                
+                // Check columns
+                for (let col = 0; col < 9; col++) {
+                    const seen = new Set();
+                    for (let row = 0; row < 9; row++) {
+                        const value = originalPuzzle[row][col];
+                        if (value !== 0) {
+                            if (seen.has(value)) {
+                                markError(seen.getIndex(value), col, row, col);
+                                return false;
+                            }
+                            seen.add(value);
+                        }
+                    }
+                }
+                
+                // Check 3x3 boxes
+                for (let boxRow = 0; boxRow < 3; boxRow++) {
+                    for (let boxCol = 0; boxCol < 3; boxCol++) {
+                        const seen = new Set();
+                        for (let i = 0; i < 3; i++) {
+                            for (let j = 0; j < 3; j++) {
+                                const row = boxRow * 3 + i;
+                                const col = boxCol * 3 + j;
+                                const value = originalPuzzle[row][col];
+                                if (value !== 0) {
+                                    if (seen.has(value)) {
+                                        // Find the previous occurrence of this value in the box
+                                        for (let i2 = 0; i2 < 3; i2++) {
+                                            for (let j2 = 0; j2 < 3; j2++) {
+                                                const r = boxRow * 3 + i2;
+                                                const c = boxCol * 3 + j2;
+                                                if ((r !== row || c !== col) && originalPuzzle[r][c] === value) {
+                                                    markError(r, c, row, col);
+                                                    return false;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    seen.add(value);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                return true;
+            }
+            
+            // Update the solved grid display
+            function updateSolvedGrid() {
+                const cells = solvedGrid.querySelectorAll('.cell');
+                
+                cells.forEach(cell => {
+                    const row = parseInt(cell.dataset.row);
+                    const col = parseInt(cell.dataset.col);
+                    const value = solvedPuzzle[row][col];
+                    
+                    if (value !== 0) {
+                        cell.textContent = value;
+                        if (originalPuzzle[row][col] === 0) {
+                            cell.style.color = '#2ecc71'; // Green for solved numbers
+                        } else {
+                            cell.style.color = '#2c3e50'; // Original numbers
+                        }
+                    } else {
+                        cell.textContent = '';
+                    }
+                });
+            }
+            
+            // Sudoku solving algorithm using backtracking
+            function solveSudoku(board) {
+                // Find an empty cell
+                const emptyCell = findEmptyCell(board);
+                
+                // If no empty cell is found, the puzzle is solved
+                if (!emptyCell) return board;
+                
+                const [row, col] = emptyCell;
+                
+                // Try digits 1-9
+                for (let num = 1; num <= 9; num++) {
+                    if (isValid(board, row, col, num)) {
+                        // Place the number
+                        board[row][col] = num;
+                        
+                        // Recursively solve the rest of the puzzle
+                        const result = solveSudoku([...board.map(row => [...row])]);
+                        
+                        // If a solution is found, return it
+                        if (result) return result;
+                        
+                        // If no solution, backtrack
+                        board[row][col] = 0;
+                    }
+                }
+                
+                // No valid solution found
+                return false;
+            }
+            
+            // Find an empty cell in the Sudoku board
+            function findEmptyCell(board) {
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        if (board[i][j] === 0) {
+                            return [i, j];
+                        }
+                    }
+                }
+                return null; // No empty cell found
+            }
+            
+            // Check if a number is valid in a given position
+            function isValid(board, row, col, num) {
+                // Check row
+                for (let i = 0; i < 9; i++) {
+                    if (board[row][i] === num) return false;
+                }
+                
+                // Check column
+                for (let i = 0; i < 9; i++) {
+                    if (board[i][col] === num) return false;
+                }
+                
+                // Check 3x3 box
+                const boxRow = Math.floor(row / 3) * 3;
+                const boxCol = Math.floor(col / 3) * 3;
+                
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (board[boxRow + i][boxCol + j] === num) return false;
+                    }
+                }
+                
+                return true;
+            }
+            
+            // Clear the grid
+            function clearGrid() {
+                originalPuzzle = Array(9).fill().map(() => Array(9).fill(0));
+                solvedPuzzle = Array(9).fill().map(() => Array(9).fill(0));
+                
+                // Clear the original grid
+                const originalCells = originalGrid.querySelectorAll('.cell');
+                originalCells.forEach(cell => {
+                    cell.textContent = '';
+                    cell.classList.remove('error');
+                });
+                
+                // Clear the solved grid
+                const solvedCells = solvedGrid.querySelectorAll('.cell');
+                solvedCells.forEach(cell => {
+                    cell.textContent = '';
+                });
+                
+                // Clear messages
+                showMessage('', '');
+                
+                // Reset timer
+                timerElement.textContent = 'Solution time: 0.0s';
+            }
+            
+            // Reset solution without changing the input
+            function resetSolution() {
+                // Clear the solved grid
+                const solvedCells = solvedGrid.querySelectorAll('.cell');
+                solvedCells.forEach(cell => {
+                    cell.textContent = '';
+                });
+                
+                solvedPuzzle = Array(9).fill().map(() => Array(9).fill(0));
+                
+                // Clear success message
+                showMessage('', '');
+                
+                // Reset timer
+                timerElement.textContent = 'Solution time: 0.0s';
+            }
+            
+            // Show messages
+            function showMessage(error, success) {
+                if (error) {
+                    errorMessage.textContent = error;
+                    errorMessage.style.display = 'block';
+                } else {
+                    errorMessage.style.display = 'none';
+                }
+                
+                if (success) {
+                    successMessage.textContent = success;
+                    successMessage.style.display = 'block';
+                } else {
+                    successMessage.style.display = 'none';
+                }
+            }
+            
+            // Load sample puzzles
+            function loadSamplePuzzle(difficulty) {
+                // Clear any previous puzzle
+                clearGrid();
+                
+                // Sample puzzles (0 represents an empty cell)
+                const puzzles = {
+                    easy: [
+                        [5, 3, 0, 0, 7, 0, 0, 0, 0],
+                        [6, 0, 0, 1, 9, 5, 0, 0, 0],
+                        [0, 9, 8, 0, 0, 0, 0, 6, 0],
+                        [8, 0, 0, 0, 6, 0, 0, 0, 3],
+                        [4, 0, 0, 8, 0, 3, 0, 0, 1],
+                        [7, 0, 0, 0, 2, 0, 0, 0, 6],
+                        [0, 6, 0, 0, 0, 0, 2, 8, 0],
+                        [0, 0, 0, 4, 1, 9, 0, 0, 5],
+                        [0, 0, 0, 0, 8, 0, 0, 7, 9]
+                    ],
+                    medium: [
+                        [0, 0, 0, 2, 6, 0, 7, 0, 1],
+                        [6, 8, 0, 0, 7, 0, 0, 9, 0],
+                        [1, 9, 0, 0, 0, 4, 5, 0, 0],
+                        [8, 2, 0, 1, 0, 0, 0, 4, 0],
+                        [0, 0, 4, 6, 0, 2, 9, 0, 0],
+                        [0, 5, 0, 0, 0, 3, 0, 2, 8],
+                        [0, 0, 9, 3, 0, 0, 0, 7, 4],
+                        [0, 4, 0, 0, 5, 0, 0, 3, 6],
+                        [7, 0, 3, 0, 1, 8, 0, 0, 0]
+                    ],
+                    hard: [
+                        [0, 0, 0, 6, 0, 0, 4, 0, 0],
+                        [7, 0, 0, 0, 0, 3, 6, 0, 0],
+                        [0, 0, 0, 0, 9, 1, 0, 8, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 5, 0, 1, 8, 0, 0, 0, 3],
+                        [0, 0, 0, 3, 0, 6, 0, 4, 5],
+                        [0, 4, 0, 2, 0, 0, 0, 6, 0],
+                        [9, 0, 3, 0, 0, 0, 0, 0, 0],
+                        [0, 2, 0, 0, 0, 0, 1, 0, 0]
+                    ]
+                };
+                
+                // Get the sample puzzle
+                const puzzle = puzzles[difficulty];
+                
+                // Update the grid and data
+                originalPuzzle = puzzle.map(row => [...row]);
+                
+                // Update the cells
+                const cells = originalGrid.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    const row = parseInt(cell.dataset.row);
+                    const col = parseInt(cell.dataset.col);
+                    const value = originalPuzzle[row][col];
+                    
+                    if (value !== 0) {
+                        cell.textContent = value;
+                    } else {
+                        cell.textContent = '';
+                    }
+                });
+            }
+            
+            // Add a method to find the index of a value in a Set
+            Set.prototype.getIndex = function(value) {
+                let index = 0;
+                for (const item of this) {
+                    if (item === value) return index;
+                    index++;
+                }
+                return -1;
+            };
+            
+        });
+    </script>
+</body>
+</html>

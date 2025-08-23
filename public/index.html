@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Home Server UBUNTU</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .link-item {
+            cursor: move;
+            user-select: none;
+        }
+        .link-item.dragging {
+            opacity: 0.5;
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .drag-handle {
+            cursor: move;
+            padding: 0 10px;
+            color: #666;
+        }
+        .links-list.drag-over {
+            background: rgba(0, 123, 255, 0.1);
+            border: 2px dashed #007bff;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="theme-dark">    
+    <h1>Home Server</h1>
+    <div class="columns-container">
+        <div class="column">
+            <h2>Servers</h2>
+            <div id="servers-container" class="links-list"></div>
+            <button id="add-servers" class="add-button column-add">
+                <i class="fas fa-plus"></i> Add Server Link
+            </button>
+        </div>
+        <div class="column">
+            <h2>Infrastructure & System</h2>
+            <div id="infrastructure-container" class="links-list"></div>
+            <button id="add-infrastructure" class="add-button column-add">
+                <i class="fas fa-plus"></i> Add Infrastructure Link
+            </button>
+        </div>
+        <div class="column">
+            <h2>Media & Apps</h2>
+            <div id="media-container" class="links-list"></div>
+            <button id="add-media" class="add-button column-add">
+                <i class="fas fa-plus"></i> Add Media/App Link
+            </button>
+        </div>
+    </div>
+    <div id="status"></div>
+
+    <script>
+        // Constants
+        const SELECTORS = {
+            STATUS: '#status',
+            SERVERS_CONTAINER: '#servers-container',
+            INFRASTRUCTURE_CONTAINER: '#infrastructure-container',
+            MEDIA_CONTAINER: '#media-container',
+            ADD_SERVERS: '#add-servers',
+            ADD_INFRASTRUCTURE: '#add-infrastructure',
+            ADD_MEDIA: '#add-media'
+        };
+        
+        const CSS_CLASSES = {
+            LINK_ITEM: 'link-item',
+            EDIT_MODE: 'edit-mode',
+            DRAGGING: 'dragging',
+            DRAG_OVER: 'drag-over',
+            LINKS_LIST: 'links-list',
+            ACTION_BUTTON: 'action-button',
+            ERROR: 'error'
+        };
+        
+        const CATEGORIES = {
+            SERVERS: 'servers',
+            INFRASTRUCTURE: 'infrastructure',
+            MEDIA: 'media'
+        };
+        
+        const STATUS_TIMEOUT = 2000;
+        
+        // Global state
+        let links = [];
+        let draggedItem = null;
+
+        /**
+         * Creates a DOM element for a single link item
+         * @param {Object} link - The link object with name, url, category properties
+         * @param {number} index - The index of the link in the links array
+         * @returns {HTMLElement} The created link element
+         */
+        function createLinkElement(link, index) {
+            const div = document.createElement('div');
+            div.className = CSS_CLASSES.LINK_ITEM;
+            div.draggable = !link.editing;
+            div.setAttribute('data-index', index);
+            
+            if (link.editing) {
+                const editForm = document.createElement('div');
+                editForm.className = CSS_CLASSES.EDIT_MODE;
+                
+                const nameInput = document.createElement('input');
+                nameInput.className = 'name-input';
+                nameInput.placeholder = 'Link Name';
+                nameInput.value = link.name;
+                
+                const urlInput = document.createElement('input');
+                urlInput.className = 'url-input';
+                urlInput.placeholder = 'URL';
+                urlInput.value = link.url;
+                
+                const saveButton = document.createElement('button');
+                saveButton.className = 'action-button edit';
+                saveButton.innerHTML = '<i class="fas fa-check"></i>';
+                saveButton.onclick = () => {
+                    links[index].name = nameInput.value;
+                    links[index].url = urlInput.value;
+                    links[index].editing = false;
+                    renderLinks();
+                    saveLinks();
+                };
+                
+                const cancelButton = document.createElement('button');
+                cancelButton.className = 'action-button delete';
+                cancelButton.innerHTML = '<i class="fas fa-times"></i>';
+                cancelButton.onclick = () => {
+                    links[index].editing = false;
+                    renderLinks();
+                };
+                
+                editForm.appendChild(nameInput);
+                editForm.appendChild(urlInput);
+                editForm.appendChild(saveButton);
+                editForm.appendChild(cancelButton);
+                div.appendChild(editForm);
+            } else {
+                const dragHandle = document.createElement('span');
+                dragHandle.className = 'drag-handle';
+                dragHandle.innerHTML = '<i class="fas fa-grip-vertical"></i>';
+                
+                const linkElement = document.createElement('a');
+                linkElement.href = link.url.startsWith('http') ? link.url : 'https://' + link.url;
+                linkElement.target = '_blank';
+                linkElement.textContent = link.name;
+                
+                const actions = document.createElement('div');
+                actions.className = 'actions';
+                
+                const editButton = document.createElement('button');
+                editButton.className = 'action-button edit';
+                editButton.innerHTML = '<i class="fas fa-edit"></i>';
+                editButton.onclick = (e) => {
+                    e.preventDefault();
+                    links[index].editing = true;
+                    renderLinks();
+                };
+                
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'action-button delete';
+                deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteButton.onclick = (e) => {
+                    e.preventDefault();
+                    if (confirm('Are you sure you want to delete this link?')) {
+                        links.splice(index, 1);
+                        renderLinks();
+                        saveLinks();
+                    }
+                };
+                
+                actions.appendChild(editButton);
+                actions.appendChild(deleteButton);
+                
+                div.appendChild(dragHandle);
+                div.appendChild(linkElement);
+                div.appendChild(actions);
+            }
+
+            // Add drag and drop event listeners
+            div.addEventListener('dragstart', handleDragStart);
+            div.addEventListener('dragend', handleDragEnd);
+            div.addEventListener('dragover', handleDragOver);
+            div.addEventListener('drop', handleDrop);
+            
+            return div;
+        }
+
+        /**
+         * Handles the start of a drag operation
+         * @param {DragEvent} e - The drag start event
+         */
+        function handleDragStart(e) {
+            // Prevent dragging if clicking on action buttons or if item is in edit mode
+            if (e.target.classList.contains('action-button') || 
+                e.currentTarget.querySelector('.edit-mode')) {
+                e.preventDefault();
+                return;
+            }
+            draggedItem = e.currentTarget;
+            e.currentTarget.classList.add(CSS_CLASSES.DRAGGING);
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', e.currentTarget.getAttribute('data-index'));
+        }
+
+        /**
+         * Handles the end of a drag operation
+         * @param {DragEvent} e - The drag end event
+         */
+        function handleDragEnd(e) {
+            e.target.classList.remove(CSS_CLASSES.DRAGGING);
+            draggedItem = null;
+        }
+
+        /**
+         * Handles drag over events and provides visual feedback
+         * @param {DragEvent} e - The drag over event
+         */
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            // Add visual feedback for drop zones
+            if (e.currentTarget.classList.contains(CSS_CLASSES.LINKS_LIST)) {
+                e.currentTarget.classList.add(CSS_CLASSES.DRAG_OVER);
+            }
+        }
+
+        /**
+         * Handles drag leave events and removes visual feedback
+         * @param {DragEvent} e - The drag leave event
+         */
+        function handleDragLeave(e) {
+            // Remove visual feedback when leaving drop zone
+            if (e.currentTarget.classList.contains(CSS_CLASSES.LINKS_LIST)) {
+                e.currentTarget.classList.remove(CSS_CLASSES.DRAG_OVER);
+            }
+        }
+
+        /**
+         * Handles drop events and processes link reordering/categorization
+         * @param {DragEvent} e - The drop event
+         */
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation(); // Prevent event bubbling
+            
+            if (!draggedItem) return;
+
+
+            // Remove visual feedback
+            document.querySelectorAll('.' + CSS_CLASSES.LINKS_LIST).forEach(container => {
+                container.classList.remove(CSS_CLASSES.DRAG_OVER);
+            });
+
+            const fromIndex = parseInt(draggedItem.getAttribute('data-index'));
+            if (fromIndex < 0 || fromIndex >= links.length) return; // Validate index
+            
+            const draggedLink = links[fromIndex];
+            if (!draggedLink) return; // Safety check
+            
+            
+            // Check if dropping on a link item or a category container
+            if (e.currentTarget.classList.contains(CSS_CLASSES.LINK_ITEM)) {
+                // Dropping on another link item
+                const toIndex = parseInt(e.currentTarget.getAttribute('data-index'));
+                if (toIndex < 0 || toIndex >= links.length || fromIndex === toIndex) return; // Validate
+                
+                const targetLink = links[toIndex];
+                if (!targetLink) return; // Safety check
+                
+                
+                // Create a deep copy of the links array to work with
+                const newLinks = [...links];
+                const [movedItem] = newLinks.splice(fromIndex, 1);
+                
+                // If dropping on a link in a different category, change the category
+                if (draggedLink.category !== targetLink.category) {
+                    movedItem.category = targetLink.category;
+                }
+                
+                // Calculate correct insertion index (adjust if we removed an item before the target)
+                const adjustedToIndex = toIndex > fromIndex ? toIndex - 1 : toIndex;
+                newLinks.splice(adjustedToIndex, 0, movedItem);
+                
+                links = newLinks;
+                renderLinks();
+                saveLinks();
+                
+            } else if (e.currentTarget.classList.contains(CSS_CLASSES.LINKS_LIST)) {
+                // Dropping on a category container - move to end of that category
+                const targetCategory = getCategoryFromContainer(e.currentTarget);
+                if (!targetCategory) return; // Safety check
+                
+                
+                // Only move if it's a different category
+                if (draggedLink.category !== targetCategory) {
+                    const newLinks = [...links];
+                    const [movedItem] = newLinks.splice(fromIndex, 1);
+                    movedItem.category = targetCategory;
+                    
+                    // Add to end of the target category
+                    newLinks.push(movedItem);
+                    links = newLinks;
+                    renderLinks();
+                    saveLinks();
+                }
+            }
+        }
+
+        /**
+         * Determines the category based on container element
+         * @param {HTMLElement} container - The container element
+         * @returns {string} The category name
+         */
+        function getCategoryFromContainer(container) {
+            if (container.id === 'servers-container') return CATEGORIES.SERVERS;
+            if (container.id === 'infrastructure-container') return CATEGORIES.INFRASTRUCTURE;
+            if (container.id === 'media-container') return CATEGORIES.MEDIA;
+            return CATEGORIES.MEDIA; // default
+        }
+
+
+        /**
+         * Renders all links into their appropriate category containers
+         */
+        function renderLinks() {
+            const serversContainer = document.querySelector(SELECTORS.SERVERS_CONTAINER);
+            const infrastructureContainer = document.querySelector(SELECTORS.INFRASTRUCTURE_CONTAINER);
+            const mediaContainer = document.querySelector(SELECTORS.MEDIA_CONTAINER);
+            
+            serversContainer.innerHTML = '';
+            infrastructureContainer.innerHTML = '';
+            mediaContainer.innerHTML = '';
+            
+            // Add drag and drop event listeners to containers
+            [serversContainer, infrastructureContainer, mediaContainer].forEach(container => {
+                container.addEventListener('dragover', handleDragOver);
+                container.addEventListener('dragleave', handleDragLeave);
+                container.addEventListener('drop', handleDrop);
+            });
+            
+            links.forEach((link, index) => {
+                const linkElement = createLinkElement(link, index);
+                if (link.category === CATEGORIES.SERVERS) {
+                    serversContainer.appendChild(linkElement);
+                } else if (link.category === CATEGORIES.INFRASTRUCTURE) {
+                    infrastructureContainer.appendChild(linkElement);
+                } else {
+                    mediaContainer.appendChild(linkElement);
+                }
+            });
+        }
+
+        /**
+         * Loads links from the server API
+         * @async
+         */
+        async function loadLinks() {
+            try {
+                const response = await fetch('/api/links');
+                links = await response.json();
+                renderLinks();
+            } catch (error) {
+                const statusElement = document.querySelector(SELECTORS.STATUS);
+                statusElement.textContent = 'Error loading links';
+                statusElement.className = CSS_CLASSES.ERROR;
+            }
+        }
+
+        /**
+         * Saves the current links array to the server
+         * @async
+         */
+        async function saveLinks() {
+            try {
+                const linksToSave = links.map(({ name, url, category }) => ({ name, url, category }));
+                
+                const response = await fetch('/api/links', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(linksToSave)
+                });
+                
+                
+                if (response.ok) {
+                    const statusElement = document.querySelector(SELECTORS.STATUS);
+                    statusElement.textContent = 'Links saved successfully';
+                    statusElement.className = '';
+                    setTimeout(() => {
+                        statusElement.textContent = '';
+                    }, STATUS_TIMEOUT);
+                } else {
+                    const errorText = await response.text();
+                    throw new Error('Failed to save: ' + response.status);
+                }
+            } catch (error) {
+                const statusElement = document.querySelector(SELECTORS.STATUS);
+                statusElement.textContent = 'Error saving links: ' + error.message;
+                statusElement.className = CSS_CLASSES.ERROR;
+            }
+        }
+
+        document.querySelector(SELECTORS.ADD_SERVERS).onclick = () => {
+            const newLink = { name: '', url: '', category: CATEGORIES.SERVERS, editing: true };
+            links.push(newLink);
+            renderLinks();
+        };
+
+        document.querySelector(SELECTORS.ADD_INFRASTRUCTURE).onclick = () => {
+            const newLink = { name: '', url: '', category: CATEGORIES.INFRASTRUCTURE, editing: true };
+            links.push(newLink);
+            renderLinks();
+        };
+
+        document.querySelector(SELECTORS.ADD_MEDIA).onclick = () => {
+            const newLink = { name: '', url: '', category: CATEGORIES.MEDIA, editing: true };
+            links.push(newLink);
+            renderLinks();
+        };
+
+        // Load links when page loads
+        loadLinks();
+    </script>
+</body>
+</html>

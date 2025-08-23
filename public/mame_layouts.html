@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAME Bezel .lay File Generator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .upload-section {
+            border: 3px dashed #007bff;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .upload-section:hover {
+            border-color: #0056b3;
+            background: #e9ecef;
+        }
+        .upload-section.dragover {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        #fileInput {
+            display: none;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background 0.3s ease;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .settings {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .setting-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .setting-row label {
+            min-width: 180px;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+        .setting-row input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+        .result-item {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .result-header {
+            background: #007bff;
+            color: white;
+            padding: 15px 20px;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .result-info {
+            padding: 15px 20px;
+            background: #e9ecef;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .result-content {
+            position: relative;
+        }
+        .lay-content {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #4a5568;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .copy-btn:hover {
+            background: #2d3748;
+        }
+        .preview-canvas {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            max-width: 300px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 MAME Bezel .lay File Generator</h1>
+        
+        <div class="upload-section" id="uploadArea">
+            <h3>📁 Select or Drop PNG Files</h3>
+            <p>Choose PNG bezel files with transparent screen areas</p>
+            <button class="btn" onclick="document.getElementById('fileInput').click()">Choose Files</button>
+            <input type="file" id="fileInput" multiple accept="image/png">
+        </div>
+
+        <div class="settings" id="settings">
+            <h3>⚙️ Detection Settings</h3>
+            <div class="setting-row">
+                <label>Alpha Threshold (0-255):</label>
+                <input type="number" id="threshold" value="10" min="0" max="255">
+                <small>Pixels with alpha below this value are considered transparent</small>
+            </div>
+            <div class="setting-row">
+                <label>Screen Margin (pixels):</label>
+                <input type="number" id="margin" value="0" min="-100" max="100">
+                <small>Adjust detected screen area (negative = shrink, positive = expand)</small>
+            </div>
+            <div class="setting-row">
+                <label>View Name:</label>
+                <input type="text" id="viewName" value="Bezel Artwork" style="width: 200px;">
+                <small>Name for the view in the .lay file</small>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-success" onclick="processFiles()">Generate .lay Files</button>
+                <button class="btn" onclick="downloadAllLay()" style="background: #28a745;">Download All as ZIP</button>
+                <button class="btn" onclick="clearAll()">Clear All</button>
+            </div>
+        </div>
+
+        <div class="results" id="results">
+            <h2>📄 Generated .lay Files</h2>
+            <div id="resultsList"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        
+        // File handling
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const settings = document.getElementById('settings');
+        const results = document.getElementById('results');
+        const resultsList = document.getElementById('resultsList');
+
+        // Event listeners
+        fileInput.addEventListener('change', handleFileSelect);
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files).filter(f => f.type === 'image/png');
+            if (files.length > 0) {
+                selectedFiles = files;
+                showSettings();
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'image/png');
+            if (files.length > 0) {
+                selectedFiles = files;
+                showSettings();
+            }
+        }
+
+        function showSettings() {
+            settings.style.display = 'block';
+            uploadArea.innerHTML = `
+                <h3>✅ ${selectedFiles.length} PNG file(s) selected</h3>
+                <p>${selectedFiles.map(f => f.name).join(', ')}</p>
+                <button class="btn" onclick="selectNewFiles()">Select Different Files</button>
+            `;
+        }
+
+        function selectNewFiles() {
+            selectedFiles = [];
+            settings.style.display = 'none';
+            results.style.display = 'none';
+            uploadArea.innerHTML = `
+                <h3>📁 Select or Drop PNG Files</h3>
+                <p>Choose PNG bezel files with transparent screen areas</p>
+                <button class="btn" onclick="document.getElementById('fileInput').click()">Choose Files</button>
+            `;
+        }
+
+        function clearAll() {
+            selectNewFiles();
+            resultsList.innerHTML = '';
+        }
+
+        // Image processing
+        function detectTransparentArea(imageData) {
+            const { data, width, height } = imageData;
+            const threshold = parseInt(document.getElementById('threshold').value);
+            
+            let minX = width, minY = height, maxX = 0, maxY = 0;
+            let transparentPixels = 0;
+
+            // Scan for transparent pixels
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const index = (y * width + x) * 4;
+                    const alpha = data[index + 3];
+                    
+                    if (alpha <= threshold) {
+                        transparentPixels++;
+                        minX = Math.min(minX, x);
+                        minY = Math.min(minY, y);
+                        maxX = Math.max(maxX, x);
+                        maxY = Math.max(maxY, y);
+                    }
+                }
+            }
+
+            if (transparentPixels === 0) {
+                return null;
+            }
+
+            // Apply margin
+            const margin = parseInt(document.getElementById('margin').value);
+            minX = Math.max(0, minX - margin);
+            minY = Math.max(0, minY - margin);
+            maxX = Math.min(width - 1, maxX + margin);
+            maxY = Math.min(height - 1, maxY + margin);
+
+            return {
+                x: minX,
+                y: minY,
+                width: maxX - minX + 1,
+                height: maxY - minY + 1,
+                imageWidth: width,
+                imageHeight: height,
+                transparentPixels: transparentPixels
+            };
+        }
+
+        function generateLayFile(fileName, screenBounds, imageDimensions) {
+            const viewName = document.getElementById('viewName').value;
+            
+            return `<?xml version="1.0"?>
+<!-- ${fileName} - Generated by MAME Bezel Generator -->
+<mamelayout version="2">
+    <element name="bezel">
+        <image file="${fileName}" />
+    </element>
+    
+    <view name="${viewName}">
+        <screen index="0">
+            <bounds x="${screenBounds.x}" y="${screenBounds.y}" width="${screenBounds.width}" height="${screenBounds.height}" />
+        </screen>
+        <element ref="bezel">
+            <bounds x="0" y="0" width="${imageDimensions.imageWidth}" height="${imageDimensions.imageHeight}" />
+        </element>
+    </view>
+</mamelayout>`;
+        }
+
+        async function processFiles() {
+            if (selectedFiles.length === 0) return;
+
+            resultsList.innerHTML = '';
+            results.style.display = 'block';
+
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                
+                try {
+                    // Create result container
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'result-item';
+                    
+                    // Load and process image
+                    const img = new Image();
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    await new Promise((resolve, reject) => {
+                        img.onload = resolve;
+                        img.onerror = reject;
+                        img.src = URL.createObjectURL(file);
+                    });
+
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    
+                    const imageData = ctx.getImageData(0, 0, img.width, img.height);
+                    const screenBounds = detectTransparentArea(imageData);
+                    
+                    if (!screenBounds) {
+                        resultDiv.innerHTML = `
+                            <div class="result-header">
+                                <span>❌ ${file.name}</span>
+                            </div>
+                            <div class="error">No transparent area detected. Try adjusting the alpha threshold.</div>
+                        `;
+                        resultsList.appendChild(resultDiv);
+                        continue;
+                    }
+
+                    // Generate preview with screen area highlighted
+                    const previewCanvas = document.createElement('canvas');
+                    const previewCtx = previewCanvas.getContext('2d');
+                    const scale = Math.min(300 / img.width, 300 / img.height);
+                    
+                    previewCanvas.width = img.width * scale;
+                    previewCanvas.height = img.height * scale;
+                    previewCanvas.className = 'preview-canvas';
+                    
+                    previewCtx.drawImage(img, 0, 0, previewCanvas.width, previewCanvas.height);
+                    
+                    // Draw screen area outline
+                    previewCtx.strokeStyle = '#ff0000';
+                    previewCtx.lineWidth = 2;
+                    previewCtx.strokeRect(
+                        screenBounds.x * scale,
+                        screenBounds.y * scale,
+                        screenBounds.width * scale,
+                        screenBounds.height * scale
+                    );
+
+                    // Generate .lay file content
+                    const layContent = generateLayFile(
+                        file.name,
+                        screenBounds,
+                        { imageWidth: img.width, imageHeight: img.height }
+                    );
+
+                    // Create result HTML
+                    const baseName = file.name.replace('.png', '');
+                    resultDiv.innerHTML = `
+                        <div class="result-header">
+                            <span>✅ ${file.name}</span>
+                            <span>${baseName}.lay</span>
+                        </div>
+                        <div class="result-info">
+                            Image: ${img.width} × ${img.height} pixels<br>
+                            Screen Area: ${screenBounds.width} × ${screenBounds.height} at (${screenBounds.x}, ${screenBounds.y})<br>
+                            Transparent Pixels: ${screenBounds.transparentPixels.toLocaleString()}
+                        </div>
+                        <div class="result-content">
+                            <button class="copy-btn" onclick="copyToClipboard(this)">Copy .lay File</button>
+                            <button class="copy-btn" onclick="downloadLayFile(this, '${baseName}')" style="right: 120px; background: #28a745;">Download .lay</button>
+                            <div class="lay-content" id="lay-${i}"></div>
+                        </div>
+                    `;
+                    
+                    // Set the lay content as text (not HTML) to preserve formatting
+                    const layContentDiv = resultDiv.querySelector('.lay-content');
+                    layContentDiv.textContent = layContent;
+                    
+                    // Add preview canvas
+                    const infoDiv = resultDiv.querySelector('.result-info');
+                    infoDiv.appendChild(previewCanvas);
+                    
+                    resultsList.appendChild(resultDiv);
+                    
+                } catch (error) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'result-item';
+                    errorDiv.innerHTML = `
+                        <div class="result-header">
+                            <span>❌ ${file.name}</span>
+                        </div>
+                        <div class="error">Error processing file: ${error.message}</div>
+                    `;
+                    resultsList.appendChild(errorDiv);
+                }
+            }
+        }
+
+        function copyToClipboard(button) {
+            const layContent = button.nextElementSibling.nextElementSibling.textContent;
+            navigator.clipboard.writeText(layContent).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.background = '#28a745';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '#4a5568';
+                }, 2000);
+            }).catch(err => {
+                // Fallback: select the text for manual copy
+                const range = document.createRange();
+                range.selectNode(button.nextElementSibling.nextElementSibling);
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(range);
+                alert('Copy failed automatically. The text is now selected - press Ctrl+C (or Cmd+C) to copy.');
+            });
+        }
+
+        function downloadLayFile(button, baseName) {
+            const layContent = button.nextElementSibling.textContent;
+            const blob = new Blob([layContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${baseName}.lay`;
+            a.style.display = 'none';
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Visual feedback
+            const originalText = button.textContent;
+            button.textContent = 'Downloaded!';
+            setTimeout(() => {
+                button.textContent = originalText;
+            }, 2000);
+        }
+
+        function downloadAllLay() {
+            const layContents = document.querySelectorAll('.lay-content');
+            if (layContents.length === 0) {
+                alert('No .lay files generated yet. Please process some PNG files first.');
+                return;
+            }
+
+            // Try to create a ZIP file if JSZip is available, otherwise download individually
+            if (window.JSZip) {
+                downloadAllAsZip(layContents);
+            } else {
+                // Load JSZip and then create ZIP
+                loadJSZipAndDownload(layContents);
+            }
+        }
+
+        function loadJSZipAndDownload(layContents) {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+            script.onload = () => {
+                downloadAllAsZip(layContents);
+            };
+            script.onerror = () => {
+                // Fallback to individual downloads
+                downloadIndividually(layContents);
+            };
+            document.head.appendChild(script);
+            
+            // Show loading feedback
+            const btn = event.target;
+            btn.textContent = 'Loading zip library...';
+        }
+
+        function downloadAllAsZip(layContents) {
+            const zip = new JSZip();
+            
+            // Add each .lay file to the ZIP
+            layContents.forEach((layDiv) => {
+                const layContent = layDiv.textContent;
+                const resultItem = layDiv.closest('.result-item');
+                const fileName = resultItem.querySelector('.result-header span').textContent;
+                const baseName = fileName.replace('✅ ', '').replace('.png', '');
+                
+                zip.file(`${baseName}.lay`, layContent);
+            });
+
+            // Generate and download the ZIP
+            zip.generateAsync({ 
+                type: 'blob',
+                compression: "DEFLATE",
+                compressionOptions: { level: 6 }
+            }).then(function(content) {
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'mame-bezel-layouts.zip';
+                a.style.display = 'none';
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                // Show success feedback
+                const btn = event.target;
+                const originalText = 'Download All .lay Files';
+                btn.textContent = `Downloaded ZIP with ${layContents.length} files!`;
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 3000);
+            }).catch(function(error) {
+                alert('ZIP creation failed: ' + error.message);
+                // Fallback to individual downloads
+                downloadIndividually(layContents);
+            });
+        }
+
+        function downloadIndividually(layContents) {
+            layContents.forEach((layDiv, index) => {
+                const layContent = layDiv.textContent;
+                const resultItem = layDiv.closest('.result-item');
+                const fileName = resultItem.querySelector('.result-header span').textContent;
+                const baseName = fileName.replace('✅ ', '').replace('.png', '');
+                
+                // Stagger downloads to avoid browser blocking
+                setTimeout(() => {
+                    const blob = new Blob([layContent], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${baseName}.lay`;
+                    a.style.display = 'none';
+                    
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, index * 1000); // 1 second delay between downloads
+            });
+
+            // Show feedback
+            const btn = event.target;
+            const originalText = 'Download All .lay Files';
+            btn.textContent = `Downloading ${layContents.length} files individually...`;
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, layContents.length * 1000 + 2000);
+        }
+    </script>
+</body>
+</html>
