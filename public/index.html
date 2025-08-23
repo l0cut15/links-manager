@@ -90,6 +90,90 @@
         let draggedItem = null;
 
         /**
+         * Validates a URL format
+         * @param {string} url - The URL to validate
+         * @returns {boolean} True if valid URL format
+         */
+        function isValidURL(url) {
+            if (!url || typeof url !== 'string') return false;
+            
+            const trimmedUrl = url.trim();
+            if (trimmedUrl.length === 0) return false;
+            
+            // Allow URLs with or without protocol
+            const urlPattern = /^(https?:\/\/)?[\w\-]+(\.[\w\-]+)*([:\d]+)?(\/.*)?$/i;
+            const localhostPattern = /^(https?:\/\/)?localhost([:\d]+)?(\/.*)?$/i;
+            const ipPattern = /^(https?:\/\/)?\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}([:\d]+)?(\/.*)?$/i;
+            const localPattern = /^(https?:\/\/)?[\w\-]+\.local([:\d]+)?(\/.*)?$/i;
+            
+            return urlPattern.test(trimmedUrl) || 
+                   localhostPattern.test(trimmedUrl) || 
+                   ipPattern.test(trimmedUrl) ||
+                   localPattern.test(trimmedUrl);
+        }
+
+        /**
+         * Validates a link name
+         * @param {string} name - The name to validate
+         * @returns {boolean} True if valid name
+         */
+        function isValidName(name) {
+            if (!name || typeof name !== 'string') return false;
+            const trimmedName = name.trim();
+            return trimmedName.length > 0 && trimmedName.length <= 100;
+        }
+
+        /**
+         * Normalizes a URL by adding protocol if missing
+         * @param {string} url - The URL to normalize
+         * @returns {string} The normalized URL
+         */
+        function normalizeURL(url) {
+            const trimmedUrl = url.trim();
+            if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
+                return 'http://' + trimmedUrl;
+            }
+            return trimmedUrl;
+        }
+
+        /**
+         * Shows validation error message
+         * @param {string} message - The error message to display
+         */
+        function showValidationError(message) {
+            const statusElement = document.querySelector(SELECTORS.STATUS);
+            statusElement.textContent = message;
+            statusElement.className = CSS_CLASSES.ERROR;
+            setTimeout(() => {
+                statusElement.textContent = '';
+                statusElement.className = '';
+            }, 3000);
+        }
+
+        /**
+         * Checks if any link is currently in editing mode
+         * @returns {boolean} True if any link is being edited
+         */
+        function hasLinkInEditMode() {
+            return links.some(link => link.editing === true);
+        }
+
+        /**
+         * Shows a status message to the user
+         * @param {string} message - The message to display
+         * @param {boolean} isError - Whether this is an error message
+         */
+        function showStatusMessage(message, isError = false) {
+            const statusElement = document.querySelector(SELECTORS.STATUS);
+            statusElement.textContent = message;
+            statusElement.className = isError ? CSS_CLASSES.ERROR : '';
+            setTimeout(() => {
+                statusElement.textContent = '';
+                statusElement.className = '';
+            }, 2000);
+        }
+
+        /**
          * Creates a DOM element for a single link item
          * @param {Object} link - The link object with name, url, category properties
          * @param {number} index - The index of the link in the links array
@@ -109,18 +193,56 @@
                 nameInput.className = 'name-input';
                 nameInput.placeholder = 'Link Name';
                 nameInput.value = link.name;
+                nameInput.maxLength = 100;
+                nameInput.required = true;
                 
                 const urlInput = document.createElement('input');
                 urlInput.className = 'url-input';
-                urlInput.placeholder = 'URL';
+                urlInput.placeholder = 'URL (e.g., example.com, 192.168.1.1:8080)';
                 urlInput.value = link.url;
+                urlInput.required = true;
+                
+                // Add Enter key support
+                const handleEnterKey = (e) => {
+                    if (e.key === 'Enter') {
+                        saveButton.click();
+                    }
+                };
+                nameInput.addEventListener('keypress', handleEnterKey);
+                urlInput.addEventListener('keypress', handleEnterKey);
                 
                 const saveButton = document.createElement('button');
                 saveButton.className = 'action-button edit';
                 saveButton.innerHTML = '<i class="fas fa-check"></i>';
                 saveButton.onclick = () => {
-                    links[index].name = nameInput.value;
-                    links[index].url = urlInput.value;
+                    const name = nameInput.value.trim();
+                    const url = urlInput.value.trim();
+                    
+                    // Validate inputs
+                    if (!isValidName(name)) {
+                        showValidationError('Please enter a valid name (1-100 characters)');
+                        nameInput.focus();
+                        return;
+                    }
+                    
+                    if (!isValidURL(url)) {
+                        showValidationError('Please enter a valid URL (e.g., example.com, 192.168.1.1:8080, localhost:3000)');
+                        urlInput.focus();
+                        return;
+                    }
+                    
+                    // Check for duplicate names
+                    const existingLink = links.find((link, i) => 
+                        i !== index && link.name.toLowerCase() === name.toLowerCase()
+                    );
+                    if (existingLink) {
+                        showValidationError('A link with this name already exists');
+                        nameInput.focus();
+                        return;
+                    }
+                    
+                    links[index].name = name;
+                    links[index].url = normalizeURL(url);
                     links[index].editing = false;
                     renderLinks();
                     saveLinks();
@@ -130,7 +252,12 @@
                 cancelButton.className = 'action-button delete';
                 cancelButton.innerHTML = '<i class="fas fa-times"></i>';
                 cancelButton.onclick = () => {
-                    links[index].editing = false;
+                    // If this is a new empty link, remove it instead of just canceling edit
+                    if (links[index].name === '' && links[index].url === '') {
+                        links.splice(index, 1);
+                    } else {
+                        links[index].editing = false;
+                    }
                     renderLinks();
                 };
                 
@@ -157,6 +284,10 @@
                 editButton.innerHTML = '<i class="fas fa-edit"></i>';
                 editButton.onclick = (e) => {
                     e.preventDefault();
+                    if (hasLinkInEditMode()) {
+                        showStatusMessage('Please finish editing the current link before editing another one', true);
+                        return;
+                    }
                     links[index].editing = true;
                     renderLinks();
                 };
@@ -406,18 +537,30 @@
         }
 
         document.querySelector(SELECTORS.ADD_SERVERS).onclick = () => {
+            if (hasLinkInEditMode()) {
+                showStatusMessage('Please finish editing the current link before adding a new one', true);
+                return;
+            }
             const newLink = { name: '', url: '', category: CATEGORIES.SERVERS, editing: true };
             links.push(newLink);
             renderLinks();
         };
 
         document.querySelector(SELECTORS.ADD_INFRASTRUCTURE).onclick = () => {
+            if (hasLinkInEditMode()) {
+                showStatusMessage('Please finish editing the current link before adding a new one', true);
+                return;
+            }
             const newLink = { name: '', url: '', category: CATEGORIES.INFRASTRUCTURE, editing: true };
             links.push(newLink);
             renderLinks();
         };
 
         document.querySelector(SELECTORS.ADD_MEDIA).onclick = () => {
+            if (hasLinkInEditMode()) {
+                showStatusMessage('Please finish editing the current link before adding a new one', true);
+                return;
+            }
             const newLink = { name: '', url: '', category: CATEGORIES.MEDIA, editing: true };
             links.push(newLink);
             renderLinks();

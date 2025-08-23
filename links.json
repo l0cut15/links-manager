@@ -115,6 +115,11 @@
     "category": "infrastructure"
   },
   {
+    "name": "Syncthing Home",
+    "url": "http://home.local:8384/",
+    "category": "infrastructure"
+  },
+  {
     "name": "Unifi - 10.10.11.1",
     "url": "http://10.10.11.1",
     "category": "infrastructure"

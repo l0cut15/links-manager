@@ -58,6 +58,46 @@ app.get('/api/links', async (req, res) => {
 });
 
 /**
+ * Validates a URL format on the server side
+ * @param {string} url - The URL to validate
+ * @returns {boolean} True if valid URL format
+ */
+function isValidURL(url) {
+    if (!url || typeof url !== 'string') return false;
+    
+    const trimmedUrl = url.trim();
+    if (trimmedUrl.length === 0 || trimmedUrl.length > 2048) return false;
+    
+    try {
+        const urlObj = new URL(trimmedUrl);
+        return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Validates a link name
+ * @param {string} name - The name to validate
+ * @returns {boolean} True if valid name
+ */
+function isValidName(name) {
+    if (!name || typeof name !== 'string') return false;
+    const trimmedName = name.trim();
+    return trimmedName.length > 0 && trimmedName.length <= 100;
+}
+
+/**
+ * Validates a category
+ * @param {string} category - The category to validate
+ * @returns {boolean} True if valid category
+ */
+function isValidCategory(category) {
+    const validCategories = ['servers', 'infrastructure', 'media'];
+    return validCategories.includes(category);
+}
+
+/**
  * POST /api/links - Saves an array of links to the JSON file
  * Validates that the input is an array and each link has required fields
  * @async
@@ -71,24 +111,82 @@ app.post('/api/links', async (req, res) => {
         
         // Validate the input
         if (!Array.isArray(links)) {
-            return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Invalid input: expected array' });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+                error: 'Invalid input: expected array of links' 
+            });
         }
+        
+        if (links.length > 1000) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+                error: 'Too many links: maximum 1000 allowed' 
+            });
+        }
+        
+        // Track names for duplicate checking
+        const nameTracker = new Map();
         
         // Validate each link object
         for (let i = 0; i < links.length; i++) {
             const link = links[i];
+            
             if (!link || typeof link !== 'object') {
-                return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: `Invalid link at index ${i}` });
+                return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+                    error: `Invalid link object at index ${i}` 
+                });
             }
-            if (!link.name || !link.url || !link.category) {
-                return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: `Missing required fields in link at index ${i}` });
+            
+            // Check for required fields
+            if (!link.name || !link.url || !link.category || 
+                typeof link.name !== 'string' || link.name.trim() === '' ||
+                typeof link.url !== 'string' || link.url.trim() === '' ||
+                typeof link.category !== 'string' || link.category.trim() === '') {
+                const missing = [];
+                if (!link.name || typeof link.name !== 'string' || link.name.trim() === '') missing.push('name');
+                if (!link.url || typeof link.url !== 'string' || link.url.trim() === '') missing.push('url');
+                if (!link.category || typeof link.category !== 'string' || link.category.trim() === '') missing.push('category');
+                return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+                    error: `Missing or empty required fields in link at index ${i}: ${missing.join(', ')}` 
+                });
+            }
+            
+            // Validate name
+            if (!isValidName(link.name)) {
+                return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+                    error: `Invalid name in link at index ${i}: must be 1-100 characters` 
+                });
+            }
+            
+            // Check for duplicate names
+            const nameLower = link.name.toLowerCase();
+            if (nameTracker.has(nameLower)) {
+                return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+                    error: `Duplicate link name at index ${i}: "${link.name}"` 
+                });
+            }
+            nameTracker.set(nameLower, i);
+            
+            // Validate URL
+            if (!isValidURL(link.url)) {
+                return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+                    error: `Invalid URL in link at index ${i}: must be a valid HTTP/HTTPS URL` 
+                });
+            }
+            
+            // Validate category
+            if (!isValidCategory(link.category)) {
+                return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+                    error: `Invalid category in link at index ${i}: must be 'servers', 'infrastructure', or 'media'` 
+                });
             }
         }
         
         await fs.writeFile(LINKS_FILE, JSON.stringify(links, null, 2));
         res.json({ message: 'Links saved successfully' });
     } catch (error) {
-        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Error saving links: ' + error.message });
+        console.error('Error saving links:', error);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ 
+            error: 'Internal server error while saving links' 
+        });
     }
 });
 

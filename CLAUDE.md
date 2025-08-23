@@ -40,7 +40,11 @@ npm install
 ## Frontend Features
 
 - Drag-and-drop link reordering
-- In-line editing of link names and URLs
+- In-line editing of link names and URLs with comprehensive validation
+- Single edit mode to prevent data loss from concurrent edits
+- Real-time input validation with user feedback
+- URL normalization (auto-adds http:// prefix)
+- Keyboard support (Enter key to save)
 - Responsive grid layout with Font Awesome icons
 - Dark theme interface
 - Real-time persistence via API calls
