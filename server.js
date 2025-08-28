@@ -93,7 +93,7 @@ function isValidName(name) {
  * @returns {boolean} True if valid category
  */
 function isValidCategory(category) {
-    const validCategories = ['servers', 'infrastructure', 'media'];
+    const validCategories = ['servers', 'infrastructure', 'media', 'websites'];
     return validCategories.includes(category);
 }
 
@@ -175,7 +175,7 @@ app.post('/api/links', async (req, res) => {
             // Validate category
             if (!isValidCategory(link.category)) {
                 return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
-                    error: `Invalid category in link at index ${i}: must be 'servers', 'infrastructure', or 'media'` 
+                    error: `Invalid category in link at index ${i}: must be 'servers', 'infrastructure', 'media', or 'websites'` 
                 });
             }
         }

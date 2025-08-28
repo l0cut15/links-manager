@@ -65,11 +65,6 @@
     "category": "infrastructure"
   },
   {
-    "name": "HP Laser",
-    "url": "http://10.10.11.178",
-    "category": "infrastructure"
-  },
-  {
     "name": "Guacamole",
     "url": "http://10.10.22.26:8080/guacamole/",
     "category": "infrastructure"
@@ -81,7 +76,7 @@
   },
   {
     "name": "Sudoku Solver",
-    "url": "http://10.10.11.11/sudoku.html",
+    "url": "http://10.10.11.11:8124",
     "category": "media"
   },
   {
@@ -120,8 +115,33 @@
     "category": "infrastructure"
   },
   {
-    "name": "Unifi - 10.10.11.1",
+    "name": "HP Laser",
+    "url": "http://10.10.11.178",
+    "category": "infrastructure"
+  },
+  {
+    "name": "Unifi Console",
     "url": "http://10.10.11.1",
     "category": "infrastructure"
+  },
+  {
+    "name": "Go Access",
+    "url": "http://10.10.22.22:7880/",
+    "category": "servers"
+  },
+  {
+    "name": "GitHub",
+    "url": "https://github.com",
+    "category": "websites"
+  },
+  {
+    "name": "Wordpress",
+    "url": "http://10.10.11.11:4411",
+    "category": "websites"
+  },
+  {
+    "name": "Tyler",
+    "url": "http://10.10.11.11:4412",
+    "category": "websites"
   }
 ]

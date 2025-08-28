@@ -52,6 +52,13 @@
                 <i class="fas fa-plus"></i> Add Media/App Link
             </button>
         </div>
+        <div class="column">
+            <h2>Websites</h2>
+            <div id="websites-container" class="links-list"></div>
+            <button id="add-websites" class="add-button column-add">
+                <i class="fas fa-plus"></i> Add Website Link
+            </button>
+        </div>
     </div>
     <div id="status"></div>
 
@@ -62,9 +69,11 @@
             SERVERS_CONTAINER: '#servers-container',
             INFRASTRUCTURE_CONTAINER: '#infrastructure-container',
             MEDIA_CONTAINER: '#media-container',
+            WEBSITES_CONTAINER: '#websites-container',
             ADD_SERVERS: '#add-servers',
             ADD_INFRASTRUCTURE: '#add-infrastructure',
-            ADD_MEDIA: '#add-media'
+            ADD_MEDIA: '#add-media',
+            ADD_WEBSITES: '#add-websites'
         };
         
         const CSS_CLASSES = {
@@ -80,7 +89,8 @@
         const CATEGORIES = {
             SERVERS: 'servers',
             INFRASTRUCTURE: 'infrastructure',
-            MEDIA: 'media'
+            MEDIA: 'media',
+            WEBSITES: 'websites'
         };
         
         const STATUS_TIMEOUT = 2000;
@@ -452,7 +462,8 @@
             if (container.id === 'servers-container') return CATEGORIES.SERVERS;
             if (container.id === 'infrastructure-container') return CATEGORIES.INFRASTRUCTURE;
             if (container.id === 'media-container') return CATEGORIES.MEDIA;
-            return CATEGORIES.MEDIA; // default
+            if (container.id === 'websites-container') return CATEGORIES.WEBSITES;
+            return CATEGORIES.WEBSITES; // default
         }
 
 
@@ -463,13 +474,15 @@
             const serversContainer = document.querySelector(SELECTORS.SERVERS_CONTAINER);
             const infrastructureContainer = document.querySelector(SELECTORS.INFRASTRUCTURE_CONTAINER);
             const mediaContainer = document.querySelector(SELECTORS.MEDIA_CONTAINER);
+            const websitesContainer = document.querySelector(SELECTORS.WEBSITES_CONTAINER);
             
             serversContainer.innerHTML = '';
             infrastructureContainer.innerHTML = '';
             mediaContainer.innerHTML = '';
+            websitesContainer.innerHTML = '';
             
             // Add drag and drop event listeners to containers
-            [serversContainer, infrastructureContainer, mediaContainer].forEach(container => {
+            [serversContainer, infrastructureContainer, mediaContainer, websitesContainer].forEach(container => {
                 container.addEventListener('dragover', handleDragOver);
                 container.addEventListener('dragleave', handleDragLeave);
                 container.addEventListener('drop', handleDrop);
@@ -481,8 +494,10 @@
                     serversContainer.appendChild(linkElement);
                 } else if (link.category === CATEGORIES.INFRASTRUCTURE) {
                     infrastructureContainer.appendChild(linkElement);
-                } else {
+                } else if (link.category === CATEGORIES.MEDIA) {
                     mediaContainer.appendChild(linkElement);
+                } else {
+                    websitesContainer.appendChild(linkElement);
                 }
             });
         }
@@ -562,6 +577,16 @@
                 return;
             }
             const newLink = { name: '', url: '', category: CATEGORIES.MEDIA, editing: true };
+            links.push(newLink);
+            renderLinks();
+        };
+
+        document.querySelector(SELECTORS.ADD_WEBSITES).onclick = () => {
+            if (hasLinkInEditMode()) {
+                showStatusMessage('Please finish editing the current link before adding a new one', true);
+                return;
+            }
+            const newLink = { name: '', url: '', category: CATEGORIES.WEBSITES, editing: true };
             links.push(newLink);
             renderLinks();
         };
