@@ -224,7 +224,9 @@
                 const saveButton = document.createElement('button');
                 saveButton.className = 'action-button edit';
                 saveButton.innerHTML = '<i class="fas fa-check"></i>';
-                saveButton.onclick = () => {
+                saveButton.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     const name = nameInput.value.trim();
                     const url = urlInput.value.trim();
                     
@@ -261,7 +263,9 @@
                 const cancelButton = document.createElement('button');
                 cancelButton.className = 'action-button delete';
                 cancelButton.innerHTML = '<i class="fas fa-times"></i>';
-                cancelButton.onclick = () => {
+                cancelButton.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     // If this is a new empty link, remove it instead of just canceling edit
                     if (links[index].name === '' && links[index].url === '') {
                         links.splice(index, 1);
@@ -294,6 +298,7 @@
                 editButton.innerHTML = '<i class="fas fa-edit"></i>';
                 editButton.onclick = (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     if (hasLinkInEditMode()) {
                         showStatusMessage('Please finish editing the current link before editing another one', true);
                         return;
@@ -307,6 +312,7 @@
                 deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
                 deleteButton.onclick = (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     if (confirm('Are you sure you want to delete this link?')) {
                         links.splice(index, 1);
                         renderLinks();

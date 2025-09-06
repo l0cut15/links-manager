@@ -1,7 +1,12 @@
 [
   {
-    "name": "Search",
-    "url": "http://10.10.11.11:8030",
+    "name": "Bookshelf",
+    "url": "http://10.10.11.11:13378/audiobookshelf",
+    "category": "media"
+  },
+  {
+    "name": "Grist",
+    "url": "http://grist.local.zeroart.net",
     "category": "media"
   },
   {
@@ -10,14 +15,14 @@
     "category": "media"
   },
   {
-    "name": "Proxmox",
-    "url": "http://10.10.11.12:8006",
-    "category": "servers"
-  },
-  {
     "name": "Immich",
     "url": "http://10.10.11.11:2283",
     "category": "media"
+  },
+  {
+    "name": "Proxmox",
+    "url": "http://10.10.11.12:8006",
+    "category": "servers"
   },
   {
     "name": "Home Assistant",
@@ -62,6 +67,11 @@
   {
     "name": "Docker",
     "url": "http://10.10.11.11:9000/",
+    "category": "infrastructure"
+  },
+  {
+    "name": "Docker Updates",
+    "url": "http://10.10.11.11:8010/containers?update-available=true",
     "category": "infrastructure"
   },
   {
@@ -130,6 +140,11 @@
     "category": "servers"
   },
   {
+    "name": "Search",
+    "url": "http://10.10.11.11:8030",
+    "category": "websites"
+  },
+  {
     "name": "Tyler",
     "url": "http://10.10.11.11:4412",
     "category": "websites"
@@ -141,17 +156,12 @@
   },
   {
     "name": "GitHub",
-    "url": "https://github.com",
+    "url": "https://github.com/",
     "category": "websites"
   },
   {
-    "name": "Grist",
-    "url": "http://grist.local.zeroart.net",
-    "category": "media"
-  },
-  {
-    "name": "Bookshelf",
-    "url": "http://10.10.11.11:13378/audiobookshelf",
-    "category": "media"
+    "name": "Fresh RSS",
+    "url": "http://freshrss.local.zeroart.net",
+    "category": "websites"
   }
 ]
