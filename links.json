@@ -1,7 +1,7 @@
 [
   {
     "name": "Search",
-    "url": "http://10.10.22.80",
+    "url": "http://10.10.11.11:8030",
     "category": "media"
   },
   {
@@ -65,8 +65,13 @@
     "category": "infrastructure"
   },
   {
+    "name": "Homebridge",
+    "url": "http://10.10.11.11:8581/login",
+    "category": "infrastructure"
+  },
+  {
     "name": "Guacamole",
-    "url": "http://10.10.22.26:8080/guacamole/",
+    "url": "http://10.10.11.11:8066/guacamole/",
     "category": "infrastructure"
   },
   {
@@ -92,11 +97,6 @@
   {
     "name": "CASA OS",
     "url": "http://10.10.11.197",
-    "category": "servers"
-  },
-  {
-    "name": "Homebridge",
-    "url": "http://10.10.11.11:8581/login",
     "category": "servers"
   },
   {
@@ -130,8 +130,8 @@
     "category": "servers"
   },
   {
-    "name": "GitHub",
-    "url": "https://github.com",
+    "name": "Tyler",
+    "url": "http://10.10.11.11:4412",
     "category": "websites"
   },
   {
@@ -140,8 +140,18 @@
     "category": "websites"
   },
   {
-    "name": "Tyler",
-    "url": "http://10.10.11.11:4412",
+    "name": "GitHub",
+    "url": "https://github.com",
     "category": "websites"
+  },
+  {
+    "name": "Grist",
+    "url": "http://grist.local.zeroart.net",
+    "category": "media"
+  },
+  {
+    "name": "Bookshelf",
+    "url": "http://10.10.11.11:13378/audiobookshelf",
+    "category": "media"
   }
 ]

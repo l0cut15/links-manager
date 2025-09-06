@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  links-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: links-manager
+    ports:
+      - "3003:3003"
+    volumes:
+      # Mount links.json for data persistence
+      - ./links.json:/app/links.json
+      # Optional: mount entire data directory if you want to expand storage
+      # - ./data:/app/data
+    environment:
+      - NODE_ENV=production
+    user: "1000:1000"  # Run as brettsamuel user
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3003/api/links', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - links-network
+
+networks:
+  links-network:
+    driver: bridge
