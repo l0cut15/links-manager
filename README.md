@@ -4,14 +4,22 @@ A personal home server dashboard application for managing and accessing local ne
 
 ## Overview
 
-This application serves as a centralized dashboard for managing links to various home server services. It provides an intuitive interface for organizing services into categories (Servers, Infrastructure & System, Media & Apps) with drag-and-drop functionality for easy reordering.
+This application serves as a centralized dashboard for managing links to various home server services. It provides an intuitive interface for organizing services into categories (Servers, Infrastructure & System, Media & Apps, Websites) with drag-and-drop functionality, quick search, and easy reordering.
 
 ## Features
 
-- **Categorized Organization**: Links are organized into three main categories:
+- **Quick Search**: Fast type-to-search with fuzzy matching
+  - Press `/` to open search overlay
+  - Fuzzy matching (e.g., "pmx" matches "Proxmox")
+  - Keyboard navigation with arrow keys
+  - Instant navigation to links
+  - Shows up to 15 results with category icons
+
+- **Categorized Organization**: Links are organized into four main categories:
   - **Servers**: Core server applications (Proxmox, Docker, TrueNAS, etc.)
   - **Infrastructure & System**: Network and system management tools
   - **Media & Apps**: Entertainment and utility applications
+  - **Websites**: General web links and websites
 
 - **Drag-and-Drop Interface**: Easily reorder links within categories by dragging them
 - **In-line Editing**: Click edit button to modify link names and URLs directly
@@ -22,6 +30,12 @@ This application serves as a centralized dashboard for managing links to various
 - **Dark Theme**: Easy-on-the-eyes dark interface with modern styling
 - **Font Awesome Icons**: Clean, professional iconography throughout
 - **User Feedback**: Clear status messages for all operations
+
+### Keyboard Shortcuts
+- `/` - Open search overlay
+- `↑` `↓` - Navigate search results
+- `Enter` - Open selected link (in search) or save edit (in edit mode)
+- `Esc` - Close search overlay
 
 ## Architecture
 
@@ -75,7 +89,7 @@ Saves updated links array to storage with comprehensive validation.
 **Validation Rules**:
 - Names: 1-100 characters, no duplicates
 - URLs: Valid HTTP/HTTPS format, supports localhost, IPs, .local domains
-- Categories: Must be 'servers', 'infrastructure', or 'media'
+- Categories: Must be 'servers', 'infrastructure', 'media', or 'websites'
 - Array limit: Maximum 1000 links
 
 **Response**: 
@@ -93,17 +107,20 @@ Links are stored as JSON objects with the following structure:
 {
   "name": "Service Name",        // Display name for the service
   "url": "http://server:port",   // Full URL to the service
-  "category": "servers"          // Category: servers, infrastructure, or media
+  "category": "servers"          // Category: servers, infrastructure, media, or websites
 }
 ```
 
 ### Categories
 
 - **servers**: Core server applications and services
-- **infrastructure**: Network infrastructure and system management tools  
+- **infrastructure**: Network infrastructure and system management tools
 - **media**: Media streaming, entertainment, and utility applications
+- **websites**: General web links and websites
 
 ## Installation & Setup
+
+### Option 1: Direct Node.js
 
 1. **Clone or download** the application files to your server
 2. **Install dependencies**:
@@ -116,7 +133,39 @@ Links are stored as JSON objects with the following structure:
    ```
 4. **Access the application** at `http://your-server:3003`
 
+### Option 2: Docker Deployment
+
+1. **Using Docker Compose** (recommended):
+   ```bash
+   docker-compose up -d
+   ```
+
+2. **Using Docker directly**:
+   ```bash
+   docker build -t links-manager .
+   docker run -d -p 3003:3003 -v $(pwd)/links.json:/app/links.json links-manager
+   ```
+
+3. **Access the application** at `http://your-server:3003`
+
+**Docker Features**:
+- Runs as non-root user (UID 1000)
+- Data persists through volume mount
+- Includes health checks
+- Auto-restarts on failure
+
 ## Usage
+
+### Quick Search
+1. Press `/` anywhere on the page to open the search overlay
+2. Start typing to filter links (uses fuzzy matching)
+   - Exact matches appear first
+   - Partial matches are supported (e.g., "pmx" finds "Proxmox")
+3. Use `↑` and `↓` arrow keys to navigate results
+4. Press `Enter` to open the selected link in a new tab
+5. Press `Esc` or click outside to close search
+
+**Note**: Search won't open while editing a link, and typing `/` in an input field won't trigger search.
 
 ### Adding Links
 1. Click the "Add [Category] Link" button in the desired category

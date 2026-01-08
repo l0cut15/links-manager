@@ -30,6 +30,38 @@
 </head>
 <body class="theme-dark">    
     <h1>Home Server</h1>
+
+    <!-- Search overlay -->
+    <div id="search-overlay" class="search-overlay hidden">
+        <div class="search-container">
+            <div class="search-input-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input
+                    type="text"
+                    id="search-input"
+                    class="search-input"
+                    placeholder="Search links... (type to filter)"
+                    autocomplete="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                />
+                <button id="search-close" class="search-close" aria-label="Close search">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="search-results" class="search-results">
+                <!-- Results will be populated dynamically -->
+            </div>
+            <div class="search-footer">
+                <span class="search-hint">
+                    <kbd>↑</kbd><kbd>↓</kbd> navigate •
+                    <kbd>Enter</kbd> open •
+                    <kbd>Esc</kbd> close
+                </span>
+            </div>
+        </div>
+    </div>
+
     <div class="columns-container">
         <div class="column">
             <h2>Servers</h2>
@@ -73,7 +105,11 @@
             ADD_SERVERS: '#add-servers',
             ADD_INFRASTRUCTURE: '#add-infrastructure',
             ADD_MEDIA: '#add-media',
-            ADD_WEBSITES: '#add-websites'
+            ADD_WEBSITES: '#add-websites',
+            SEARCH_OVERLAY: '#search-overlay',
+            SEARCH_INPUT: '#search-input',
+            SEARCH_RESULTS: '#search-results',
+            SEARCH_CLOSE: '#search-close'
         };
         
         const CSS_CLASSES = {
@@ -83,7 +119,10 @@
             DRAG_OVER: 'drag-over',
             LINKS_LIST: 'links-list',
             ACTION_BUTTON: 'action-button',
-            ERROR: 'error'
+            ERROR: 'error',
+            HIDDEN: 'hidden',
+            SELECTED: 'selected',
+            SEARCH_RESULT_ITEM: 'search-result-item'
         };
         
         const CATEGORIES = {
@@ -98,6 +137,8 @@
         // Global state
         let links = [];
         let draggedItem = null;
+        let searchSelectedIndex = -1;
+        let searchFilteredLinks = [];
 
         /**
          * Validates a URL format
@@ -508,6 +549,310 @@
             });
         }
 
+        // ============================================
+        // SEARCH FUNCTIONALITY
+        // ============================================
+
+        /**
+         * Calculates fuzzy match score between query and text
+         * Higher score = better match
+         * @param {string} text - The text to search in (link name)
+         * @param {string} query - The search query
+         * @returns {number} Match score (0 = no match, higher = better match)
+         */
+        function fuzzyMatchScore(text, query) {
+            if (!query) return 1; // Empty query matches everything
+
+            const textLower = text.toLowerCase();
+            const queryLower = query.toLowerCase();
+
+            // Exact match gets highest score
+            if (textLower === queryLower) return 10000;
+
+            // Starts with query gets very high score
+            if (textLower.startsWith(queryLower)) return 5000;
+
+            // Contains query as substring gets high score
+            if (textLower.includes(queryLower)) return 1000;
+
+            // Fuzzy matching: all characters in order
+            let textIndex = 0;
+            let queryIndex = 0;
+            let score = 0;
+            let consecutiveMatches = 0;
+
+            while (textIndex < textLower.length && queryIndex < queryLower.length) {
+                if (textLower[textIndex] === queryLower[queryIndex]) {
+                    score += 1 + consecutiveMatches * 5; // Bonus for consecutive matches
+                    consecutiveMatches++;
+                    queryIndex++;
+                } else {
+                    consecutiveMatches = 0;
+                }
+                textIndex++;
+            }
+
+            // If we matched all query characters, return the score
+            if (queryIndex === queryLower.length) {
+                // Bonus for matching all characters
+                return score + 100;
+            }
+
+            return 0; // No match
+        }
+
+        /**
+         * Filters and sorts links based on search query
+         * @param {string} query - The search query
+         * @returns {Array} Filtered and sorted links
+         */
+        function filterLinks(query) {
+            if (!query.trim()) {
+                // Show all links when query is empty
+                return [...links].filter(link => !link.editing);
+            }
+
+            return links
+                .filter(link => !link.editing)
+                .map(link => ({
+                    ...link,
+                    score: fuzzyMatchScore(link.name, query)
+                }))
+                .filter(link => link.score > 0)
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 15); // Limit to 15 results
+        }
+
+        /**
+         * Renders search results in the dropdown
+         * @param {Array} results - Filtered links to display
+         */
+        function renderSearchResults(results) {
+            const resultsContainer = document.querySelector(SELECTORS.SEARCH_RESULTS);
+            resultsContainer.innerHTML = '';
+
+            if (results.length === 0) {
+                // The CSS ::before pseudo-element will show "No matches found"
+                return;
+            }
+
+            results.forEach((link, index) => {
+                const resultItem = document.createElement('div');
+                resultItem.className = CSS_CLASSES.SEARCH_RESULT_ITEM;
+                resultItem.setAttribute('data-index', index);
+                resultItem.setAttribute('data-url', link.url);
+
+                // Icon based on category
+                const iconMap = {
+                    servers: 'fa-server',
+                    infrastructure: 'fa-network-wired',
+                    media: 'fa-photo-video',
+                    websites: 'fa-globe'
+                };
+                const iconClass = iconMap[link.category] || 'fa-link';
+
+                resultItem.innerHTML = `
+                    <div class="search-result-icon">
+                        <i class="fas ${iconClass}"></i>
+                    </div>
+                    <div class="search-result-content">
+                        <div class="search-result-name">${escapeHtml(link.name)}</div>
+                        <div class="search-result-url">${escapeHtml(link.url)}</div>
+                    </div>
+                    <div class="search-result-category">${link.category}</div>
+                `;
+
+                // Click handler
+                resultItem.addEventListener('click', () => {
+                    navigateToLink(link.url);
+                });
+
+                // Hover handler to update selection
+                resultItem.addEventListener('mouseenter', () => {
+                    selectSearchResult(index);
+                });
+
+                resultsContainer.appendChild(resultItem);
+            });
+
+            // Auto-select first result
+            if (searchSelectedIndex === -1 && results.length > 0) {
+                selectSearchResult(0);
+            }
+        }
+
+        /**
+         * Escapes HTML to prevent XSS
+         * @param {string} text - Text to escape
+         * @returns {string} Escaped text
+         */
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        /**
+         * Selects a search result by index
+         * @param {number} index - Index of result to select
+         */
+        function selectSearchResult(index) {
+            const results = document.querySelectorAll('.' + CSS_CLASSES.SEARCH_RESULT_ITEM);
+
+            // Remove previous selection
+            results.forEach(item => item.classList.remove(CSS_CLASSES.SELECTED));
+
+            // Validate index
+            if (index < 0 || index >= results.length) return;
+
+            searchSelectedIndex = index;
+            const selectedItem = results[index];
+            selectedItem.classList.add(CSS_CLASSES.SELECTED);
+
+            // Scroll into view if needed
+            selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+
+        /**
+         * Navigates to a link URL
+         * @param {string} url - The URL to navigate to
+         */
+        function navigateToLink(url) {
+            const normalizedUrl = url.startsWith('http') ? url : 'http://' + url;
+            window.open(normalizedUrl, '_blank');
+            closeSearch();
+        }
+
+        /**
+         * Opens the search overlay
+         */
+        function openSearch() {
+            // Don't open if currently editing a link
+            if (hasLinkInEditMode()) {
+                return;
+            }
+
+            const overlay = document.querySelector(SELECTORS.SEARCH_OVERLAY);
+            const input = document.querySelector(SELECTORS.SEARCH_INPUT);
+
+            overlay.classList.remove(CSS_CLASSES.HIDDEN);
+            input.value = '';
+            input.focus();
+
+            // Show all links initially
+            searchFilteredLinks = filterLinks('');
+            searchSelectedIndex = -1;
+            renderSearchResults(searchFilteredLinks);
+        }
+
+        /**
+         * Closes the search overlay
+         */
+        function closeSearch() {
+            const overlay = document.querySelector(SELECTORS.SEARCH_OVERLAY);
+            overlay.classList.add(CSS_CLASSES.HIDDEN);
+            searchSelectedIndex = -1;
+            searchFilteredLinks = [];
+        }
+
+        /**
+         * Handles search input changes
+         */
+        function handleSearchInput(e) {
+            const query = e.target.value;
+            searchFilteredLinks = filterLinks(query);
+            searchSelectedIndex = -1;
+            renderSearchResults(searchFilteredLinks);
+        }
+
+        /**
+         * Handles keyboard navigation in search
+         * @param {KeyboardEvent} e - The keyboard event
+         */
+        function handleSearchKeydown(e) {
+            const resultsCount = searchFilteredLinks.length;
+
+            switch(e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    if (resultsCount > 0) {
+                        const nextIndex = (searchSelectedIndex + 1) % resultsCount;
+                        selectSearchResult(nextIndex);
+                    }
+                    break;
+
+                case 'ArrowUp':
+                    e.preventDefault();
+                    if (resultsCount > 0) {
+                        const prevIndex = searchSelectedIndex <= 0
+                            ? resultsCount - 1
+                            : searchSelectedIndex - 1;
+                        selectSearchResult(prevIndex);
+                    }
+                    break;
+
+                case 'Enter':
+                    e.preventDefault();
+                    if (searchSelectedIndex >= 0 && searchSelectedIndex < resultsCount) {
+                        const selectedLink = searchFilteredLinks[searchSelectedIndex];
+                        navigateToLink(selectedLink.url);
+                    }
+                    break;
+
+                case 'Escape':
+                    e.preventDefault();
+                    closeSearch();
+                    break;
+            }
+        }
+
+        /**
+         * Global keyboard handler for search trigger
+         * @param {KeyboardEvent} e - The keyboard event
+         */
+        function handleGlobalKeydown(e) {
+            // Check if user is typing in an input field
+            const activeElement = document.activeElement;
+            const isTypingInInput = activeElement && (
+                activeElement.tagName === 'INPUT' ||
+                activeElement.tagName === 'TEXTAREA' ||
+                activeElement.classList.contains('name-input') ||
+                activeElement.classList.contains('url-input')
+            );
+
+            // Trigger search with '/' key (only if not already typing)
+            if (e.key === '/' && !isTypingInInput) {
+                e.preventDefault();
+                openSearch();
+            }
+        }
+
+        /**
+         * Initializes search functionality
+         */
+        function initializeSearch() {
+            const overlay = document.querySelector(SELECTORS.SEARCH_OVERLAY);
+            const input = document.querySelector(SELECTORS.SEARCH_INPUT);
+            const closeButton = document.querySelector(SELECTORS.SEARCH_CLOSE);
+
+            // Input handler
+            input.addEventListener('input', handleSearchInput);
+            input.addEventListener('keydown', handleSearchKeydown);
+
+            // Close button handler
+            closeButton.addEventListener('click', closeSearch);
+
+            // Click overlay backdrop to close
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    closeSearch();
+                }
+            });
+
+            // Global keyboard shortcut
+            document.addEventListener('keydown', handleGlobalKeydown);
+        }
+
         /**
          * Loads links from the server API
          * @async
@@ -599,6 +944,9 @@
 
         // Load links when page loads
         loadLinks();
+
+        // Initialize search functionality
+        initializeSearch();
     </script>
 </body>
 </html>
