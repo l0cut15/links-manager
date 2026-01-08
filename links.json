@@ -1,72 +1,72 @@
 [
   {
     "name": "Bookshelf",
-    "url": "http://10.10.11.11:13378/audiobookshelf",
+    "url": "https://bookshelf.local.zeroart.net/audiobookshelf",
     "category": "media"
   },
   {
     "name": "Grist",
-    "url": "http://grist.local.zeroart.net",
+    "url": "https://grist.local.zeroart.net",
     "category": "media"
   },
   {
     "name": "IT Tools",
-    "url": "http://10.10.11.11:8082",
+    "url": "https://it-tools.local.zeroart.net/",
     "category": "media"
   },
   {
     "name": "Immich",
-    "url": "http://10.10.11.11:2283",
+    "url": "https://immich.local.zeroart.net",
     "category": "media"
   },
   {
     "name": "Proxmox",
-    "url": "http://10.10.11.12:8006",
+    "url": "https://proxmox.local.zeroart.net",
     "category": "servers"
   },
   {
     "name": "Home Assistant",
-    "url": "http://10.10.11.15:8123",
+    "url": "https://haos.local.zeroart.net",
     "category": "servers"
   },
   {
     "name": "JellyFin",
-    "url": "http://10.10.11.11:8096",
+    "url": "https://jellyfin.local.zeroart.net",
     "category": "media"
   },
   {
     "name": "Plex",
-    "url": "http://10.10.11.11:32400/web",
+    "url": "https://plex.local.zeroart.net/web",
     "category": "media"
   },
   {
     "name": "TrueNAS",
-    "url": "http://10.10.22.10",
+    "url": "https://truenas.local.zeroart.net",
     "category": "servers"
   },
   {
     "name": "Subscriptions",
-    "url": "http://10.10.11.11:8412",
+    "url": "https://subs.local.zeroart.net/login.php",
     "category": "media"
   },
   {
     "name": "N8N",
-    "url": "http://10.10.11.11:5678",
+    "url": "https://n8n.local.zeroart.net",
     "category": "media"
   },
   {
     "name": "PDF",
-    "url": "http://10.10.11.11:61440",
+    "url": "https://stirling.local.zeroart.net",
     "category": "media"
   },
   {
     "name": "Pihole",
-    "url": "http://10.10.11.10/admin",
+    "url": "http://10.10.11.8/admin",
     "category": "servers"
   },
   {
     "name": "Docker",
-    "url": "http://10.10.11.11:9000/",
+    "url": "https://portainer.local.zeroart.net",
     "category": "infrastructure"
   },
   {
@@ -76,38 +76,33 @@
   },
   {
     "name": "Homebridge",
-    "url": "http://10.10.11.11:8581/login",
+    "url": "https://homebridge.local.zeroart.net/login",
     "category": "infrastructure"
   },
   {
     "name": "Guacamole",
-    "url": "http://10.10.11.11:8066/guacamole/",
+    "url": "https://guacamole.local.zeroart.net/guacamole",
     "category": "infrastructure"
   },
   {
-    "name": "Grafana",
-    "url": "http://10.10.11.11:6720/d/eebybtwr0yvi8b/unifi-performance?orgId=1&from=now-6h&to=now&timezone=browser&tab=queries",
+    "name": "QBittorrent",
+    "url": "http://casaos.local:8181/",
     "category": "media"
   },
   {
     "name": "Sudoku Solver",
-    "url": "http://10.10.11.11:8124",
+    "url": "https://sudoku.local.zeroart.net",
     "category": "media"
   },
   {
     "name": "Netboot",
-    "url": "http://10.10.11.11:3014",
+    "url": "https://netboot.local.zeroart.net",
     "category": "servers"
   },
   {
     "name": "Mame Layouts",
-    "url": "http://10.10.11.11/mame_layouts.html",
+    "url": "https://home.local.zeroart.net/mame_layouts.html",
     "category": "media"
-  },
-  {
-    "name": "CASA OS",
-    "url": "http://10.10.11.197",
-    "category": "servers"
   },
   {
     "name": "Proxy Manager",
@@ -121,7 +116,7 @@
   },
   {
     "name": "Syncthing Home",
-    "url": "http://home.local:8384/",
+    "url": "https://syncthing-home.local.zeroart.net",
     "category": "infrastructure"
   },
   {
@@ -131,7 +126,7 @@
   },
   {
     "name": "Unifi Console",
-    "url": "http://10.10.11.1",
+    "url": "https://unifi.local.zeroart.net",
     "category": "infrastructure"
   },
   {
@@ -140,18 +135,23 @@
     "category": "servers"
   },
   {
+    "name": "AI Search",
+    "url": "https://openwebui.local.zeroart.net",
+    "category": "websites"
+  },
+  {
     "name": "Search",
-    "url": "http://10.10.11.11:8030",
+    "url": "https://searchxng.local.zeroart.net",
     "category": "websites"
   },
   {
     "name": "Tyler",
-    "url": "http://10.10.11.11:4412",
+    "url": "https://tylersamuel.local.zeroart.net/",
     "category": "websites"
   },
   {
     "name": "Wordpress",
-    "url": "http://10.10.11.11:4411",
+    "url": "https://wordpress.local.zeroart.net",
     "category": "websites"
   },
   {
@@ -161,7 +161,7 @@
   },
   {
     "name": "Fresh RSS",
-    "url": "http://freshrss.local.zeroart.net",
+    "url": "https://freshrss.local.zeroart.net",
     "category": "websites"
   }
 ]
