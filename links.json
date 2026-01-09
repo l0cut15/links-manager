@@ -1,6 +1,6 @@
 [
   {
-    "name": "Bookshelf",
+    "name": "Audio Bookshelf",
     "url": "https://bookshelf.local.zeroart.net/audiobookshelf",
     "category": "media"
   },
@@ -80,13 +80,13 @@
     "category": "infrastructure"
   },
   {
-    "name": "Guacamole",
-    "url": "https://guacamole.local.zeroart.net/guacamole",
+    "name": "PBS",
+    "url": "http://10.10.22.13:8007",
     "category": "infrastructure"
   },
   {
-    "name": "QBittorrent",
-    "url": "http://casaos.local:8181/",
+    "name": "QBittorrent home",
+    "url": "https://torrent.local.zeroart.net",
     "category": "media"
   },
   {
@@ -120,14 +120,14 @@
     "category": "infrastructure"
   },
   {
-    "name": "HP Laser",
-    "url": "http://10.10.11.178",
-    "category": "infrastructure"
-  },
-  {
     "name": "Unifi Console",
     "url": "https://unifi.local.zeroart.net",
     "category": "infrastructure"
+  },
+  {
+    "name": "OpenWebUI",
+    "url": "https://openwebui.local.zeroart.net",
+    "category": "servers"
   },
   {
     "name": "Go Access",
@@ -135,23 +135,13 @@
     "category": "servers"
   },
   {
-    "name": "AI Search",
-    "url": "https://openwebui.local.zeroart.net",
-    "category": "websites"
-  },
-  {
-    "name": "Search",
+    "name": "SearchXNG",
     "url": "https://searchxng.local.zeroart.net",
     "category": "websites"
   },
   {
-    "name": "Tyler",
-    "url": "https://tylersamuel.local.zeroart.net/",
-    "category": "websites"
-  },
-  {
-    "name": "Wordpress",
-    "url": "https://wordpress.local.zeroart.net",
+    "name": "Fresh RSS",
+    "url": "https://freshrss.local.zeroart.net",
     "category": "websites"
   },
   {
@@ -160,8 +150,23 @@
     "category": "websites"
   },
   {
-    "name": "Fresh RSS",
-    "url": "https://freshrss.local.zeroart.net",
+    "name": "(Wordpress)",
+    "url": "https://wordpress.local.zeroart.net",
     "category": "websites"
+  },
+  {
+    "name": "(Tyler)",
+    "url": "https://tylersamuel.local.zeroart.net/",
+    "category": "websites"
+  },
+  {
+    "name": "(Guacamole)",
+    "url": "https://guacamole.local.zeroart.net/guacamole",
+    "category": "infrastructure"
+  },
+  {
+    "name": "(NTOP)",
+    "url": "https://ntop.local.zeroart.net",
+    "category": "infrastructure"
   }
 ]
