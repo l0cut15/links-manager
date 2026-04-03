@@ -11,6 +11,8 @@ services:
     volumes:
       # Mount links.json for data persistence
       - ./links.json:/app/links.json
+      # Mount public directory so static files are served without rebuilding
+      - ./public:/app/public
       # Optional: mount entire data directory if you want to expand storage
       # - ./data:/app/data
     environment:

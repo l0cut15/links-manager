@@ -1,0 +1,280 @@
+
+<style>
+  .drop-zone { border: 1.5px dashed var(--color-border-secondary); border-radius: var(--border-radius-lg); padding: 2rem; text-align: center; cursor: pointer; transition: background 0.15s; }
+  .drop-zone.over { background: var(--color-background-secondary); }
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 1.25rem 0; }
+  .metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.85rem 1rem; }
+  .metric .label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .metric .value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+  .metric .sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; font-size: 13px; }
+  .bar-label { width: 110px; color: var(--color-text-secondary); text-align: right; flex-shrink: 0; }
+  .bar-track { flex: 1; background: var(--color-background-secondary); border-radius: 3px; height: 14px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+  .bar-count { width: 60px; color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
+  .section { border-top: 0.5px solid var(--color-border-tertiary); margin-top: 1.25rem; padding-top: 1.25rem; }
+  .verdict { border-radius: var(--border-radius-md); padding: 0.75rem 1rem; font-size: 13px; margin-top: 1rem; }
+  .verdict.good { background: var(--color-background-success); color: var(--color-text-success); }
+  .verdict.warn { background: var(--color-background-warning); color: var(--color-text-warning); }
+  .verdict.bad  { background: var(--color-background-danger);  color: var(--color-text-danger);  }
+  .error-box { background: var(--color-background-danger); color: var(--color-text-danger); border-radius: var(--border-radius-md); padding: 0.75rem 1rem; font-size: 13px; margin-top: 1rem; }
+  .warn-box { background: var(--color-background-warning); color: var(--color-text-warning); border-radius: var(--border-radius-md); padding: 0.75rem 1rem; font-size: 13px; margin-top: 0.5rem; }
+  .info-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.75rem 1rem; font-size: 12px; margin-top: 0.5rem; color: var(--color-text-secondary); font-family: var(--font-mono); }
+  table.missing { width: 100%; font-size: 12px; border-collapse: collapse; margin-top: 0.75rem; }
+  table.missing th { text-align: left; color: var(--color-text-secondary); font-weight: 500; padding: 4px 6px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  table.missing td { padding: 3px 6px; color: var(--color-text-primary); border-bottom: 0.5px solid var(--color-border-tertiary); font-family: var(--font-mono); font-size: 11px; }
+  button.export { font-size: 12px; padding: 5px 12px; cursor: pointer; }
+  button.reset { font-size: 12px; padding: 5px 12px; cursor: pointer; margin-left: 8px; }
+</style>
+
+<div style="padding: 1rem 0;">
+  <div class="drop-zone" id="dropzone" onclick="document.getElementById('fileinput').click()">
+    <div style="font-size: 14px; color: var(--color-text-secondary); margin-bottom: 6px;">Drop fixdat XML here or click to browse</div>
+    <div style="font-size: 12px; color: var(--color-text-tertiary);">Supports clrmame fixdat and MAME -listxml output</div>
+    <input type="file" id="fileinput" accept=".xml" style="display:none">
+  </div>
+
+  <div id="validation-errors" style="display:none"></div>
+
+  <div id="results" style="display:none">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem;">
+      <div id="file-label" style="font-size:12px; color:var(--color-text-tertiary);"></div>
+      <button class="reset" onclick="resetTool()">Load another file</button>
+    </div>
+    <div class="metric-grid" id="metrics"></div>
+    <div class="section">
+      <div style="font-size: 13px; font-weight: 500; margin-bottom: 8px; color: var(--color-text-primary);">Breakdown by content type</div>
+      <div id="bars"></div>
+    </div>
+    <div id="verdict-box"></div>
+    <div class="section" id="rom-section" style="display:none">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="font-size: 13px; font-weight: 500; color: var(--color-text-primary);">Missing ROM sets <span id="rom-count-label" style="font-weight:400; color:var(--color-text-secondary);"></span></div>
+        <button class="export" onclick="exportList('roms')">Export list</button>
+      </div>
+      <table class="missing"><thead><tr><th>Machine</th><th>Description</th><th>ROMs</th></tr></thead><tbody id="rom-table"></tbody></table>
+      <div id="rom-more" style="font-size:12px; color:var(--color-text-tertiary); margin-top:6px;"></div>
+    </div>
+    <div class="section" id="chd-section" style="display:none">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="font-size: 13px; font-weight: 500; color: var(--color-text-primary);">Missing CHD machines <span id="chd-count-label" style="font-weight:400; color:var(--color-text-secondary);"></span></div>
+        <button class="export" onclick="exportList('chds')">Export list</button>
+      </div>
+      <table class="missing"><thead><tr><th>Machine</th><th>Description</th><th>Disks</th></tr></thead><tbody id="chd-table"></tbody></table>
+      <div id="chd-more" style="font-size:12px; color:var(--color-text-tertiary); margin-top:6px;"></div>
+    </div>
+    <div class="section" id="sample-section" style="display:none">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="font-size: 13px; font-weight: 500; color: var(--color-text-primary);">Missing sample machines <span id="smp-count-label" style="font-weight:400; color:var(--color-text-secondary);"></span></div>
+        <button class="export" onclick="exportList('samples')">Export list</button>
+      </div>
+      <table class="missing"><thead><tr><th>Machine</th><th>Description</th><th>Samples</th></tr></thead><tbody id="smp-table"></tbody></table>
+      <div id="smp-more" style="font-size:12px; color:var(--color-text-tertiary); margin-top:6px;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MAX_ROWS = 50;
+let exportData = { roms: [], chds: [], samples: [] };
+
+const dz = document.getElementById('dropzone');
+const fi = document.getElementById('fileinput');
+
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); processFile(e.dataTransfer.files[0]); });
+fi.addEventListener('change', () => { if (fi.files[0]) processFile(fi.files[0]); });
+
+function resetTool() {
+  document.getElementById('dropzone').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('validation-errors').style.display = 'none';
+  document.getElementById('validation-errors').innerHTML = '';
+  fi.value = '';
+  exportData = { roms: [], chds: [], samples: [] };
+  ['rom-section','chd-section','sample-section'].forEach(id => document.getElementById(id).style.display = 'none');
+}
+
+function showErrors(html) {
+  const box = document.getElementById('validation-errors');
+  box.innerHTML = html;
+  box.style.display = 'block';
+  document.getElementById('dropzone').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+}
+
+function processFile(file) {
+  const errBox = document.getElementById('validation-errors');
+  errBox.innerHTML = '';
+  errBox.style.display = 'none';
+
+  if (!file) return;
+
+  if (!file.name.toLowerCase().endsWith('.xml')) {
+    showErrors(`<div class="error-box">Invalid file type: <strong>${file.name}</strong> — only .xml files are accepted.</div>
+      <button class="reset" style="margin-top:0.75rem" onclick="resetTool()">Try again</button>`);
+    return;
+  }
+
+  if (file.size === 0) {
+    showErrors(`<div class="error-box">File is empty (0 bytes): <strong>${file.name}</strong></div>
+      <button class="reset" style="margin-top:0.75rem" onclick="resetTool()">Try again</button>`);
+    return;
+  }
+
+  if (file.size > 500 * 1024 * 1024) {
+    showErrors(`<div class="error-box">File too large (${(file.size/1024/1024).toFixed(0)} MB). Full MAME -listxml files can be very large — use a fixdat instead, or run the Python script locally.</div>
+      <button class="reset" style="margin-top:0.75rem" onclick="resetTool()">Try again</button>`);
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = e => parseXML(e.target.result, file.name, file.size);
+  reader.onerror = () => showErrors(`<div class="error-box">Could not read file. Check file permissions and try again.</div>
+    <button class="reset" style="margin-top:0.75rem" onclick="resetTool()">Try again</button>`);
+  reader.readAsText(file);
+}
+
+function parseXML(text, fname, fsize) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, 'text/xml');
+
+  const parseError = doc.querySelector('parsererror');
+  if (parseError) {
+    const msg = parseError.textContent.split('\n')[0].trim().substring(0, 200);
+    showErrors(`<div class="error-box">XML parse error — file is malformed or corrupted.<br><br>${msg}</div>
+      <div class="info-box">File: ${fname} (${(fsize/1024).toFixed(0)} KB)</div>
+      <button class="reset" style="margin-top:0.75rem" onclick="resetTool()">Try again</button>`);
+    return;
+  }
+
+  const root = doc.documentElement;
+  const rootTag = root.tagName.toLowerCase();
+
+  const knownRoots = ['mame', 'datafile', 'softwarelist', 'softwarelists'];
+  if (!knownRoots.includes(rootTag)) {
+    showErrors(`<div class="error-box">Unrecognised XML format — root element is <strong>&lt;${root.tagName}&gt;</strong>, expected &lt;mame&gt;, &lt;datafile&gt;, or &lt;softwarelist&gt;.</div>
+      <div class="warn-box">This tool supports: clrmame fixdat, MAME -listxml, MAME -listsoftware, and standard DAT files.</div>
+      <button class="reset" style="margin-top:0.75rem" onclick="resetTool()">Try again</button>`);
+    return;
+  }
+
+  const machines = doc.querySelectorAll('machine, game, software');
+  if (machines.length === 0) {
+    const warnings = [];
+    if (rootTag === 'mame') warnings.push('File is a valid MAME XML but contains no machine entries — it may be an empty fixdat (your set is complete).');
+    else warnings.push('No machine, game, or software entries found in this file.');
+    showErrors(`<div class="warn-box">${warnings[0]}</div>
+      <div class="info-box">Root: &lt;${root.tagName}&gt;  |  File: ${fname}  |  Size: ${(fsize/1024).toFixed(0)} KB</div>
+      <button class="reset" style="margin-top:0.75rem" onclick="resetTool()">Try again</button>`);
+    return;
+  }
+
+  const build = root.getAttribute('build') || root.getAttribute('version') || '';
+  const warnings = [];
+  if (!build) warnings.push('No build/version attribute found on root element — version cannot be confirmed.');
+
+  let total = 0, romOnly = 0, chdOnly = 0, smpOnly = 0, mixed = 0;
+  let romList = [], chdList = [], smpList = [];
+
+  machines.forEach(m => {
+    total++;
+    const name = m.getAttribute('name') || '';
+    const desc = m.querySelector('description')?.textContent || name;
+    const roms = m.querySelectorAll('rom');
+    const disks = m.querySelectorAll('disk');
+    const samples = m.querySelectorAll('sample');
+    const hasRom = roms.length > 0;
+    const hasDisk = disks.length > 0;
+    const hasSmp = samples.length > 0;
+
+    const types = [hasRom, hasDisk, hasSmp].filter(Boolean).length;
+    if (types > 1) mixed++;
+    else if (hasRom) romOnly++;
+    else if (hasDisk) chdOnly++;
+    else if (hasSmp) smpOnly++;
+
+    if (hasRom) romList.push({ name, desc, count: roms.length, items: [...roms].map(r => r.getAttribute('name')).join(', ') });
+    if (hasDisk) chdList.push({ name, desc, count: disks.length, items: [...disks].map(d => d.getAttribute('name')).join(', ') });
+    if (hasSmp) smpList.push({ name, desc, count: samples.length, items: [...samples].map(s => s.getAttribute('name')).join(', ') });
+  });
+
+  exportData = { roms: romList, chds: chdList, samples: smpList };
+  renderResults({ total, romOnly, chdOnly, smpOnly, mixed, romList, chdList, smpList, fname, fsize, build, warnings });
+}
+
+function renderResults(d) {
+  document.getElementById('dropzone').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+
+  let fileInfo = `${d.fname} — ${(d.fsize/1024).toFixed(0)} KB`;
+  if (d.build) fileInfo += ` — build: ${d.build}`;
+  document.getElementById('file-label').textContent = fileInfo;
+
+  if (d.warnings.length) {
+    const errBox = document.getElementById('validation-errors');
+    errBox.innerHTML = d.warnings.map(w => `<div class="warn-box">${w}</div>`).join('');
+    errBox.style.display = 'block';
+  }
+
+  const romTotal = d.romList.length;
+  const chdTotal = d.chdList.length;
+  const smpTotal = d.smpList.length;
+
+  document.getElementById('metrics').innerHTML = `
+    <div class="metric"><div class="label">Total missing</div><div class="value">${d.total.toLocaleString()}</div><div class="sub">machines in fixdat</div></div>
+    <div class="metric"><div class="label">ROM sets missing</div><div class="value" style="color:var(--color-text-danger)">${romTotal.toLocaleString()}</div><div class="sub">need ROM ZIPs</div></div>
+    <div class="metric"><div class="label">CHD machines</div><div class="value" style="color:var(--color-text-warning)">${chdTotal.toLocaleString()}</div><div class="sub">disk images only</div></div>
+    <div class="metric"><div class="label">Sample machines</div><div class="value" style="color:var(--color-text-info)">${smpTotal.toLocaleString()}</div><div class="sub">audio samples only</div></div>
+  `;
+
+  const max = Math.max(d.total, 1);
+  const bars = [
+    { label: 'ROM only', count: d.romOnly, color: '#E24B4A' },
+    { label: 'CHD only', count: d.chdOnly, color: '#EF9F27' },
+    { label: 'Samples only', count: d.smpOnly, color: '#378ADD' },
+    { label: 'Mixed', count: d.mixed, color: '#7F77DD' },
+  ].filter(b => b.count > 0);
+
+  document.getElementById('bars').innerHTML = bars.map(b => `
+    <div class="bar-row">
+      <div class="bar-label">${b.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(b.count/max*100)}%;background:${b.color}"></div></div>
+      <div class="bar-count">${b.count.toLocaleString()}</div>
+    </div>
+  `).join('');
+
+  let verdict, cls;
+  if (romTotal === 0 && d.total > 0) { verdict = `ROM set is complete — all ${d.total.toLocaleString()} missing items are CHDs or samples, not ROM ZIPs.`; cls = 'good'; }
+  else if (romTotal === 0 && d.total === 0) { verdict = `Nothing missing — this fixdat is empty. Your set is complete.`; cls = 'good'; }
+  else if (romTotal < 50) { verdict = `${romTotal} ROM set${romTotal>1?'s':''} missing — nearly complete, small gap to fill.`; cls = 'warn'; }
+  else { verdict = `${romTotal.toLocaleString()} ROM sets missing — significant gaps remain in your collection.`; cls = 'bad'; }
+  document.getElementById('verdict-box').innerHTML = `<div class="verdict ${cls}">${verdict}</div>`;
+
+  renderTable(d.romList, 'rom-section', 'rom-table', 'rom-count-label', 'rom-more');
+  renderTable(d.chdList, 'chd-section', 'chd-table', 'chd-count-label', 'chd-more');
+  renderTable(d.smpList, 'sample-section', 'smp-table', 'smp-count-label', 'smp-more');
+}
+
+function renderTable(list, sectionId, tableId, labelId, moreId) {
+  if (!list.length) return;
+  document.getElementById(sectionId).style.display = 'block';
+  document.getElementById(labelId).textContent = `(${list.length.toLocaleString()})`;
+  document.getElementById(tableId).innerHTML = list.slice(0, MAX_ROWS).map(r =>
+    `<tr><td>${r.name}</td><td>${r.desc}</td><td>${r.count}</td></tr>`
+  ).join('');
+  if (list.length > MAX_ROWS)
+    document.getElementById(moreId).textContent = `Showing ${MAX_ROWS} of ${list.length.toLocaleString()} — export for full list`;
+}
+
+function exportList(type) {
+  const list = exportData[type];
+  if (!list.length) return;
+  const header = type === 'roms' ? 'machine\tdescription\trom_count\troms'
+                : type === 'chds' ? 'machine\tdescription\tdisk_count\tdisks'
+                : 'machine\tdescription\tsample_count\tsamples';
+  const blob = new Blob([header + '\n' + list.map(r => `${r.name}\t${r.desc}\t${r.count}\t${r.items}`).join('\n')], { type: 'text/plain' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `missing_${type}.txt`; a.click();
+}
+</script>
