@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetProbe</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0a0c0f;
+    --surface:  #111418;
+    --border:   #1e2329;
+    --muted:    #3a4048;
+    --text:     #c8cdd5;
+    --dim:      #666e7a;
+    --accent:   #00e5a0;
+    --warn:     #f5a623;
+    --danger:   #ff4d4d;
+    --mono:     'IBM Plex Mono', monospace;
+    --sans:     'IBM Plex Sans', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 300;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  .logo span { color: var(--dim); font-weight: 400; }
+
+  .tagline {
+    font-size: 12px;
+    color: var(--dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  main {
+    flex: 1;
+    max-width: 860px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 40px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  /* ── Connection bar ── */
+  .connect-bar {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .connect-bar input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .connect-bar input:focus { border-color: var(--accent); }
+  .connect-bar input::placeholder { color: var(--muted); }
+
+  button {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 10px 20px;
+    transition: opacity 0.15s, background 0.15s;
+  }
+
+  button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-primary:not(:disabled):hover { opacity: 0.85; }
+
+  .btn-ghost {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:not(:disabled):hover { border-color: var(--muted); }
+
+  /* ── Status pill ── */
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--dim);
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: var(--mono);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .pill::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .pill-idle    { color: var(--muted); background: rgba(58,64,72,0.3); }
+  .pill-live    { color: var(--accent); background: rgba(0,229,160,0.1); animation: pulse 2s infinite; }
+  .pill-running { color: var(--warn);  background: rgba(245,166,35,0.1); }
+  .pill-error   { color: var(--danger); background: rgba(255,77,77,0.1); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.6; }
+  }
+
+  /* ── Config options ── */
+  .config-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .config-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+
+  .config-card label {
+    display: block;
+    font-size: 11px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+
+  .config-card select,
+  .config-card input[type=number] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 6px 8px;
+    outline: none;
+  }
+
+  .config-card select:focus,
+  .config-card input[type=number]:focus { border-color: var(--accent); }
+
+  /* ── Metric cards ── */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .metric::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--border);
+  }
+
+  .metric.active::after { background: var(--accent); }
+  .metric.done::after   { background: var(--accent); opacity: 0.4; }
+
+  .metric-label {
+    font-size: 10px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+
+  .metric-value {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .metric-value.dim { color: var(--muted); }
+
+  .metric-unit {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dim);
+    margin-top: 4px;
+  }
+
+  /* ── Progress bar ── */
+  .progress-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--dim);
+    margin-bottom: 10px;
+  }
+
+  .progress-track {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.2s;
+  }
+
+  /* ── Log ── */
+  .log-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .log-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .log-body {
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dim);
+    max-height: 180px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .log-body::-webkit-scrollbar { width: 4px; }
+  .log-body::-webkit-scrollbar-track { background: transparent; }
+  .log-body::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 2px; }
+
+  .log-entry { display: flex; gap: 12px; }
+  .log-ts    { color: var(--muted); flex-shrink: 0; }
+  .log-msg   { color: var(--dim); }
+  .log-msg.ok   { color: var(--accent); }
+  .log-msg.warn { color: var(--warn); }
+  .log-msg.err  { color: var(--danger); }
+
+  /* ── Run button row ── */
+  .run-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn-run {
+    background: var(--accent);
+    color: #000;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 32px;
+    letter-spacing: 0.03em;
+  }
+  .btn-run:not(:disabled):hover { opacity: 0.85; }
+
+  /* ── Jitter sparkline ── */
+  .sparkline-wrap {
+    grid-column: span 2;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+
+  .sparkline-label {
+    font-size: 10px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+
+  canvas#sparkline {
+    width: 100%;
+    height: 48px;
+    display: block;
+  }
+
+  @media (max-width: 600px) {
+    .metrics-grid  { grid-template-columns: repeat(2, 1fr); }
+    .config-grid   { grid-template-columns: 1fr 1fr; }
+    .sparkline-wrap { grid-column: span 2; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Net<span>/</span>Probe</div>
+  <div class="tagline">WebSocket network diagnostics</div>
+</header>
+
+<main>
+
+  <!-- Connection -->
+  <div class="connect-bar">
+    <input type="text" id="wsUrl" placeholder="ws://hostname:8765/ws" value="" />
+    <button class="btn-primary" id="btnConnect" onclick="toggleConnect()">Connect</button>
+  </div>
+
+  <div class="status-row">
+    <span class="pill pill-idle" id="statusPill">Idle</span>
+    <span id="statusText">Enter a server address and connect</span>
+  </div>
+
+  <!-- Config -->
+  <div class="config-grid">
+    <div class="config-card">
+      <label>Payload size</label>
+      <select id="cfgSize">
+        <option value="1048576">1 MB</option>
+        <option value="3221225472" selected>3 GB</option>
+        <option value="419430400">400 MB</option>
+        <option value="4294967296">4 GB</option>
+      </select>
+    </div>
+    <div class="config-card">
+      <label>Ping count</label>
+      <input type="number" id="cfgPings" value="20" min="5" max="100" />
+    </div>
+    <div class="config-card">
+      <label>Ping interval (ms)</label>
+      <input type="number" id="cfgInterval" value="100" min="20" max="2000" />
+    </div>
+  </div>
+
+  <!-- Run -->
+  <div class="run-row">
+    <button class="btn-run" id="btnRun" onclick="runTest()" disabled>Run Test</button>
+    <button class="btn-ghost" id="btnAbort" onclick="abortTest()" disabled>Abort</button>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span id="progressPhase">—</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <!-- Metrics -->
+  <div class="metrics-grid">
+    <div class="metric" id="mLatency">
+      <div class="metric-label">Latency (avg)</div>
+      <div class="metric-value dim" id="vLatency">—</div>
+      <div class="metric-unit">ms RTT</div>
+    </div>
+    <div class="metric" id="mJitter">
+      <div class="metric-label">Jitter</div>
+      <div class="metric-value dim" id="vJitter">—</div>
+      <div class="metric-unit">ms</div>
+    </div>
+    <div class="metric" id="mDown">
+      <div class="metric-label">Download</div>
+      <div class="metric-value dim" id="vDown">—</div>
+      <div class="metric-unit" id="uDown">Mbps</div>
+    </div>
+    <div class="metric" id="mUp">
+      <div class="metric-label">Upload</div>
+      <div class="metric-value dim" id="vUp">—</div>
+      <div class="metric-unit" id="uUp">Mbps</div>
+    </div>
+  </div>
+
+  <!-- Sparkline for latency samples -->
+  <div class="sparkline-wrap">
+    <div class="sparkline-label">RTT samples (ms)</div>
+    <canvas id="sparkline" height="48"></canvas>
+  </div>
+
+  <!-- Log -->
+  <div class="log-wrap">
+    <div class="log-header">
+      <span>Event log</span>
+      <button class="btn-ghost" style="padding:3px 10px;font-size:11px;" onclick="clearLog()">Clear</button>
+    </div>
+    <div class="log-body" id="logBody"></div>
+  </div>
+
+</main>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+let ws = null;
+let running = false;
+let aborted = false;
+let rttSamples = [];
+let resolvePhase = null;
+
+// ── WebSocket connect/disconnect ──────────────────────────────────────────────
+function toggleConnect() {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.close();
+    return;
+  }
+  const url = document.getElementById('wsUrl').value.trim();
+  if (!url) { log('Enter a server URL', 'err'); return; }
+
+  setStatus('running', 'Connecting…');
+  log(`Connecting to ${url}`);
+
+  try {
+    ws = new WebSocket(url);
+  } catch(e) {
+    setStatus('error', 'Invalid URL');
+    log(e.message, 'err');
+    return;
+  }
+
+  ws.binaryType = 'arraybuffer';
+
+  ws.onopen = () => {
+    setStatus('live', 'Connected');
+    log('Connection established', 'ok');
+    document.getElementById('btnConnect').textContent = 'Disconnect';
+    document.getElementById('btnRun').disabled = false;
+  };
+
+  ws.onclose = () => {
+    setStatus('idle', 'Disconnected');
+    log('Connection closed', 'warn');
+    document.getElementById('btnConnect').textContent = 'Connect';
+    document.getElementById('btnRun').disabled = true;
+    document.getElementById('btnAbort').disabled = true;
+    ws = null;
+    if (running) { aborted = true; running = false; }
+    if (resolvePhase) { resolvePhase(null); resolvePhase = null; }
+  };
+
+  ws.onerror = () => {
+    setStatus('error', 'Connection error');
+    log('WebSocket error', 'err');
+  };
+
+  ws.onmessage = (evt) => {
+    if (typeof evt.data === 'string') {
+      try {
+        const msg = JSON.parse(evt.data);
+        handleMessage(msg);
+      } catch(e) {}
+    } else {
+      handleBinary(evt.data);
+    }
+  };
+}
+
+// ── Message routing ───────────────────────────────────────────────────────────
+let pongResolve = null;
+let downloadBytes = 0;
+let downloadStart = 0;
+let downloadResolve = null;
+let uploadAckBytes = 0;
+let uploadResolve = null;
+let uploadTotalBytes = 0;
+
+function handleMessage(msg) {
+  switch(msg.type) {
+    case 'pong':
+      if (pongResolve) { pongResolve(msg); pongResolve = null; }
+      break;
+    case 'download_done':
+      if (downloadResolve) { downloadResolve(downloadBytes); downloadResolve = null; }
+      break;
+    case 'upload_ready':
+      if (resolvePhase) { resolvePhase(); resolvePhase = null; }
+      break;
+    case 'ack':
+      uploadAckBytes += msg.bytes;
+      if (uploadAckBytes >= uploadTotalBytes && uploadResolve) {
+        uploadResolve(uploadAckBytes); uploadResolve = null;
+      }
+      break;
+  }
+}
+
+function handleBinary(buf) {
+  // Download data arriving
+  downloadBytes += buf.byteLength - 8; // subtract 8-byte ts header
+}
+
+// ── Test runner ───────────────────────────────────────────────────────────────
+async function runTest() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  running = true; aborted = false;
+  rttSamples = [];
+  document.getElementById('btnRun').disabled = true;
+  document.getElementById('btnAbort').disabled = false;
+  resetMetrics();
+
+  const size     = parseInt(document.getElementById('cfgSize').value);
+  const pings    = parseInt(document.getElementById('cfgPings').value);
+  const interval = parseInt(document.getElementById('cfgInterval').value);
+
+  try {
+    // ── Phase 1: Latency ──────────────────────────────────────────────────
+    setPhase('Latency test', 0);
+    log(`Sending ${pings} pings at ${interval}ms intervals`);
+    setMetricActive('mLatency');
+
+    for (let i = 0; i < pings; i++) {
+      if (aborted) throw new Error('aborted');
+      const ts = Date.now();
+      const rtt = await sendPing(ts);
+      rttSamples.push(rtt);
+      updateSparkline(rttSamples);
+      const avg = mean(rttSamples);
+      setMetricValue('vLatency', avg.toFixed(1));
+      setMetricValue('vJitter', jitter(rttSamples).toFixed(1));
+      setPhase('Latency test', Math.round(((i+1)/pings)*100));
+      await sleep(interval);
+    }
+
+    setMetricDone('mLatency'); setMetricDone('mJitter');
+    log(`Latency avg=${mean(rttSamples).toFixed(1)}ms jitter=${jitter(rttSamples).toFixed(1)}ms`, 'ok');
+
+    // ── Phase 2: Download ─────────────────────────────────────────────────
+    if (aborted) throw new Error('aborted');
+    setPhase('Download test', 0);
+    log(`Requesting ${fmtBytes(size)} download`);
+    setMetricActive('mDown');
+
+    downloadBytes = 0;
+    downloadStart = performance.now();
+
+    await new Promise((res) => {
+      downloadResolve = res;
+      ws.send(JSON.stringify({ type: 'download', bytes: size }));
+    });
+
+    const dlElapsed = (performance.now() - downloadStart) / 1000;
+    const dlMbps = (downloadBytes * 8) / 1e6 / dlElapsed;
+    setMetricValue('vDown', dlMbps.toFixed(1));
+    setMetricDone('mDown');
+    setPhase('Download test', 100);
+    log(`Download: ${dlMbps.toFixed(2)} Mbps (${fmtBytes(downloadBytes)} in ${dlElapsed.toFixed(2)}s)`, 'ok');
+
+    // ── Phase 3: Upload ───────────────────────────────────────────────────
+    if (aborted) throw new Error('aborted');
+    setPhase('Upload test', 0);
+    log(`Sending ${fmtBytes(size)} upload`);
+    setMetricActive('mUp');
+
+    // Signal server we're about to upload
+    await new Promise((res) => {
+      resolvePhase = res;
+      ws.send(JSON.stringify({ type: 'upload' }));
+    });
+
+    uploadAckBytes = 0;
+    uploadTotalBytes = size;
+    const chunkSize = 64 * 1024;
+    const uploadStart = performance.now();
+    const chunk = new ArrayBuffer(chunkSize);
+
+    let sent = 0;
+    await new Promise((res) => {
+      uploadResolve = res;
+      const sendChunk = () => {
+        if (aborted) { res(); return; }
+        while (sent < size) {
+          const remaining = size - sent;
+          const payload = remaining < chunkSize ? chunk.slice(0, remaining) : chunk;
+          ws.send(payload);
+          sent += payload.byteLength;
+          setPhase('Upload test', Math.round((sent/size)*100));
+          if (ws.bufferedAmount > 4 * 1024 * 1024) {
+            setTimeout(sendChunk, 50);
+            return;
+          }
+        }
+      };
+      sendChunk();
+    });
+
+    const ulElapsed = (performance.now() - uploadStart) / 1000;
+    const ulMbps = (size * 8) / 1e6 / ulElapsed;
+    setMetricValue('vUp', ulMbps.toFixed(1));
+    setMetricDone('mUp');
+    setPhase('Upload test', 100);
+    log(`Upload: ${ulMbps.toFixed(2)} Mbps (${fmtBytes(size)} in ${ulElapsed.toFixed(2)}s)`, 'ok');
+
+    setPhase('Complete', 100);
+    log('Test complete', 'ok');
+
+  } catch(e) {
+    if (e.message !== 'aborted') log(`Error: ${e.message}`, 'err');
+    else log('Test aborted', 'warn');
+    setPhase('Aborted', 0);
+  } finally {
+    running = false;
+    document.getElementById('btnRun').disabled = false;
+    document.getElementById('btnAbort').disabled = true;
+  }
+}
+
+function abortTest() {
+  aborted = true;
+  if (pongResolve) { pongResolve(null); pongResolve = null; }
+  if (downloadResolve) { downloadResolve(0); downloadResolve = null; }
+  if (uploadResolve) { uploadResolve(0); uploadResolve = null; }
+  if (resolvePhase) { resolvePhase(null); resolvePhase = null; }
+}
+
+// ── Ping helper ───────────────────────────────────────────────────────────────
+function sendPing(ts) {
+  return new Promise((res) => {
+    pongResolve = (msg) => {
+      if (!msg) { res(9999); return; }
+      res(Date.now() - msg.clientTS);
+    };
+    ws.send(JSON.stringify({ type: 'ping', ts }));
+    setTimeout(() => { if (pongResolve) { pongResolve(null); } }, 5000);
+  });
+}
+
+// ── Stats helpers ─────────────────────────────────────────────────────────────
+const mean   = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+const jitter = arr => {
+  if (arr.length < 2) return 0;
+  const diffs = arr.slice(1).map((v,i)=>Math.abs(v-arr[i]));
+  return mean(diffs);
+};
+const sleep  = ms => new Promise(r => setTimeout(r, ms));
+const fmtBytes = b => b >= 1e9 ? `${(b/1e9).toFixed(1)} GB` : b >= 1e6 ? `${(b/1e6).toFixed(0)} MB` : `${(b/1e3).toFixed(0)} KB`;
+
+// ── Sparkline ─────────────────────────────────────────────────────────────────
+function updateSparkline(samples) {
+  const canvas = document.getElementById('sparkline');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.parentElement.clientWidth - 32;
+  const h = 48;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  if (samples.length < 2) return;
+
+  const max = Math.max(...samples);
+  const min = Math.min(...samples);
+  const range = max - min || 1;
+
+  const pts = samples.map((v,i) => ({
+    x: (i / (samples.length - 1)) * w,
+    y: h - ((v - min) / range) * (h - 6) - 3
+  }));
+
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) {
+    const mx = (pts[i-1].x + pts[i].x) / 2;
+    ctx.bezierCurveTo(mx, pts[i-1].y, mx, pts[i].y, pts[i].x, pts[i].y);
+  }
+  ctx.strokeStyle = 'rgba(0,229,160,0.8)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Last point dot
+  const last = pts[pts.length-1];
+  ctx.beginPath();
+  ctx.arc(last.x, last.y, 3, 0, Math.PI*2);
+  ctx.fillStyle = '#00e5a0';
+  ctx.fill();
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+function setStatus(state, text) {
+  const pill = document.getElementById('statusPill');
+  pill.className = `pill pill-${state === 'live' ? 'live' : state === 'running' ? 'running' : state === 'error' ? 'error' : 'idle'}`;
+  pill.textContent = state === 'live' ? 'Connected' : state === 'running' ? 'Testing' : state === 'error' ? 'Error' : 'Idle';
+  document.getElementById('statusText').textContent = text;
+}
+
+function setPhase(label, pct) {
+  document.getElementById('progressPhase').textContent = label;
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function setMetricValue(id, val) {
+  const el = document.getElementById(id);
+  el.textContent = val;
+  el.classList.remove('dim');
+}
+
+function setMetricActive(id) {
+  document.getElementById(id).classList.add('active');
+  document.getElementById(id).classList.remove('done');
+}
+
+function setMetricDone(id) {
+  document.getElementById(id).classList.remove('active');
+  document.getElementById(id).classList.add('done');
+}
+
+function resetMetrics() {
+  ['vLatency','vJitter','vDown','vUp'].forEach(id => {
+    const el = document.getElementById(id);
+    el.textContent = '—';
+    el.classList.add('dim');
+  });
+  ['mLatency','mJitter','mDown','mUp'].forEach(id => {
+    document.getElementById(id).classList.remove('active','done');
+  });
+  const canvas = document.getElementById('sparkline');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  setPhase('—', 0);
+}
+
+function log(msg, cls='') {
+  const body = document.getElementById('logBody');
+  const ts = new Date().toLocaleTimeString('en-GB', {hour12:false});
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `<span class="log-ts">${ts}</span><span class="log-msg ${cls}">${msg}</span>`;
+  body.appendChild(entry);
+  body.scrollTop = body.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById('logBody').innerHTML = '';
+}
+
+document.getElementById('wsUrl').value = 'wss://netprobe.local.zeroart.net/ws';
+</script>
+
+</body>
+</html>

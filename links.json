@@ -5,6 +5,16 @@
     "category": "media"
   },
   {
+    "name": "Download TV",
+    "url": "https://sonarr.local.zeroart.net",
+    "category": "media"
+  },
+  {
+    "name": "Download Movies",
+    "url": "https://radarr.local.zeroart.net",
+    "category": "media"
+  },
+  {
     "name": "Grist",
     "url": "https://grist.local.zeroart.net",
     "category": "media"
@@ -20,8 +30,18 @@
     "category": "media"
   },
   {
+    "name": "Hermes",
+    "url": "https://hermes.local.zeroart.net",
+    "category": "servers"
+  },
+  {
     "name": "Proxmox",
     "url": "https://proxmox.local.zeroart.net",
+    "category": "servers"
+  },
+  {
+    "name": "KVM Proxmox",
+    "url": "https://kvm-proxmox.local.zeroart.net",
     "category": "servers"
   },
   {
@@ -81,7 +101,7 @@
   },
   {
     "name": "Docker Updates",
-    "url": "http://10.10.11.11:8010/containers?update-available=true",
+    "url": "https://wud.local.zeroart.net",
     "category": "infrastructure"
   },
   {
@@ -95,12 +115,22 @@
     "category": "media"
   },
   {
+    "name": "Unifi Console",
+    "url": "https://unifi.local.zeroart.net",
+    "category": "servers"
+  },
+  {
     "name": "Netboot",
     "url": "https://netboot.local.zeroart.net",
     "category": "servers"
   },
   {
-    "name": "Mame Layouts",
+    "name": "--------------------",
+    "url": "https://home.local.zeroart.net",
+    "category": "media"
+  },
+  {
+    "name": "Mame Bezel from PNG",
     "url": "https://home.local.zeroart.net/mame_layouts.html",
     "category": "media"
   },
@@ -120,18 +150,13 @@
     "category": "infrastructure"
   },
   {
-    "name": "Unifi Console",
-    "url": "https://unifi.local.zeroart.net",
-    "category": "infrastructure"
-  },
-  {
     "name": "OpenWebUI",
     "url": "https://openwebui.local.zeroart.net",
     "category": "servers"
   },
   {
-    "name": "Go Access",
-    "url": "http://10.10.22.22:7880/",
+    "name": "KVM (nobara)",
+    "url": "https://kvm-linux.local.zeroart.net",
     "category": "servers"
   },
   {
@@ -160,6 +185,11 @@
     "category": "websites"
   },
   {
+    "name": "Go Access",
+    "url": "http://10.10.22.22:7880/",
+    "category": "infrastructure"
+  },
+  {
     "name": "(Guacamole)",
     "url": "https://guacamole.local.zeroart.net/guacamole",
     "category": "infrastructure"
@@ -171,17 +201,32 @@
   },
   {
     "name": "Netdata",
-    "url": "http://10.10.11.11:19999/spaces/home/rooms/local/overview#metrics_correlation=false&after=-900&before=0&modal=&modalTab=&_o=q1ZKzkgsKvFLzE3VLUvMUbJSyk3NK40PriwuSc3VNVDSUYrOSy1JSSxJjE9MT80ric_JT07MidXVxa-tFgA",
+    "url": "http://10.10.11.11:19999/v3",
     "category": "servers"
-  },
-  {
-    "name": "Cachy",
-    "url": "https://proxmox.local.zeroart.net/?console=kvm&novnc=1&vmid=101&vmname=CachyGnome&node=pve&resize=off&cmd=",
-    "category": "websites"
   },
   {
     "name": "Validata MAME Fixdat",
     "url": "https://home.local.zeroart.net/mame_fixdat.html",
     "category": "media"
+  },
+  {
+    "name": "Claw",
+    "url": "https://claw.local.zeroart.net",
+    "category": "websites"
+  },
+  {
+    "name": "NOUS",
+    "url": "https://portal.nousresearch.com/login/humanity",
+    "category": "websites"
+  },
+  {
+    "name": "Bee",
+    "url": "https://bee.local.zeroart.net",
+    "category": "websites"
+  },
+  {
+    "name": "Speedtest",
+    "url": "http://home.local.zeroart.net/netprobe.html",
+    "category": "infrastructure"
   }
 ]
