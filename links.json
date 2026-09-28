@@ -30,8 +30,8 @@
     "category": "media"
   },
   {
-    "name": "Hermes",
-    "url": "https://hermes.local.zeroart.net",
+    "name": "Huginn",
+    "url": "https://huginn.local.zeroart.net/auth/password-login",
     "category": "servers"
   },
   {
@@ -52,11 +52,6 @@
   {
     "name": "JellyFin",
     "url": "https://jellyfin.local.zeroart.net",
-    "category": "media"
-  },
-  {
-    "name": "Plex",
-    "url": "https://plex.local.zeroart.net/web",
     "category": "media"
   },
   {
@@ -145,6 +140,11 @@
     "category": "infrastructure"
   },
   {
+    "name": "Speedtest",
+    "url": "http://home.local.zeroart.net/netprobe.html",
+    "category": "infrastructure"
+  },
+  {
     "name": "Syncthing Home",
     "url": "https://syncthing-home.local.zeroart.net",
     "category": "infrastructure"
@@ -155,7 +155,7 @@
     "category": "servers"
   },
   {
-    "name": "KVM (nobara)",
+    "name": "KVM - nobara",
     "url": "https://kvm-linux.local.zeroart.net",
     "category": "servers"
   },
@@ -185,11 +185,6 @@
     "category": "websites"
   },
   {
-    "name": "Go Access",
-    "url": "http://10.10.22.22:7880/",
-    "category": "infrastructure"
-  },
-  {
     "name": "(Guacamole)",
     "url": "https://guacamole.local.zeroart.net/guacamole",
     "category": "infrastructure"
@@ -198,11 +193,6 @@
     "name": "(NTOP)",
     "url": "https://ntop.local.zeroart.net",
     "category": "infrastructure"
-  },
-  {
-    "name": "Netdata",
-    "url": "http://10.10.11.11:19999/v3",
-    "category": "servers"
   },
   {
     "name": "Validata MAME Fixdat",
@@ -221,12 +211,12 @@
   },
   {
     "name": "Bee",
-    "url": "https://bee.local.zeroart.net",
+    "url": "https://bee.local.zeroart.net/admin",
     "category": "websites"
   },
   {
-    "name": "Speedtest",
-    "url": "http://home.local.zeroart.net/netprobe.html",
+    "name": "(Go Access)",
+    "url": "http://10.10.22.22:7880/",
     "category": "infrastructure"
   }
 ]
