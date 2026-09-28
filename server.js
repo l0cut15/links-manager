@@ -1,10 +1,6 @@
 import express from 'express';
-import bodyParser from 'body-parser';
 import { promises as fs } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = 3003;
 const LINKS_FILE = 'links.json';
@@ -15,16 +11,8 @@ const HTTP_STATUS = {
 };
 
 // Middleware
-app.use(bodyParser.json());
+app.use(express.json());
 app.use(express.static('public'));
-
-// CORS headers
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-    next();
-});
 
 /**
  * Initializes the links.json file if it doesn't exist
@@ -157,7 +145,7 @@ app.post('/api/links', async (req, res) => {
             }
             
             // Check for duplicate names
-            const nameLower = link.name.toLowerCase();
+            const nameLower = link.name.trim().toLowerCase();
             if (nameTracker.has(nameLower)) {
                 return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
                     error: `Duplicate link name at index ${i}: "${link.name}"` 
@@ -188,16 +176,6 @@ app.post('/api/links', async (req, res) => {
             error: 'Internal server error while saving links' 
         });
     }
-});
-
-/**
- * GET / - Serves the main homepage HTML file
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @returns {void}
- */
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 /**

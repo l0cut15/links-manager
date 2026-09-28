@@ -1,5 +1,5 @@
-# Use the official Node.js 18 Alpine image for smaller size
-FROM node:18-alpine
+# Use the official Node.js 22 Alpine image for smaller size
+FROM node:22-alpine
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # Copy the rest of the application code
 COPY . .
