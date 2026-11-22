@@ -7,6 +7,12 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <script>
+        // Apply the saved theme before first paint to avoid a flash of the default theme.
+        // The class lives on <html> so every `.theme-x ...` selector in styles.css applies.
+        document.documentElement.classList.add('theme-' + (localStorage.getItem('theme') || 'midnight'));
+        localStorage.removeItem('layout'); // Left over from the removed layout picker
+    </script>
     <style>
         .link-item {
             cursor: move;
@@ -28,7 +34,12 @@
         }
     </style>
 </head>
-<body class="theme-dark">    
+<body>
+    <div class="style-switcher">
+        <i class="fas fa-palette" aria-hidden="true"></i>
+        <select id="theme-select" aria-label="Theme" title="Theme"></select>
+    </div>
+
     <h1>Home Server</h1>
 
     <!-- Search overlay -->
@@ -133,6 +144,8 @@
         };
         
         const STATUS_TIMEOUT = 2000;
+        // Keep in sync with the inline script in <head>
+        const DEFAULT_THEME = 'midnight';
         
         // Global state
         let links = [];
@@ -859,6 +872,92 @@
             document.addEventListener('keydown', handleGlobalKeydown);
         }
 
+        // ============================================
+        // THEMES
+        // ============================================
+
+        /**
+         * Finds class names with a given prefix used anywhere in styles.css selectors,
+         * e.g. prefix 'theme' finds `.theme-nord` and `.theme-nord .link-item` → 'nord'.
+         * Looks inside @media blocks too.
+         * @param {string} prefix - Class prefix without the trailing dash (e.g. 'theme')
+         * @returns {string[]} Names in stylesheet order, without duplicates
+         */
+        function getStyleOptions(prefix) {
+            const names = [];
+            const pattern = new RegExp('\\.' + prefix + '-([\\w-]+)', 'g');
+            const collect = (rules) => {
+                for (const rule of rules) {
+                    if (rule.cssRules) collect(rule.cssRules); // @media, @supports, ...
+                    for (const match of (rule.selectorText || '').matchAll(pattern)) {
+                        if (!names.includes(match[1])) names.push(match[1]);
+                    }
+                }
+            };
+            for (const sheet of document.styleSheets) {
+                if (!sheet.href || !sheet.href.endsWith('/styles.css')) continue;
+                try {
+                    collect(sheet.cssRules);
+                } catch {
+                    // Stylesheet not readable
+                }
+            }
+            return names;
+        }
+
+        /**
+         * Swaps the `<prefix>-*` class on <html> and remembers the choice
+         * @param {string} prefix - Class prefix, e.g. 'theme'
+         * @param {string} name - Option name without the prefix
+         */
+        function applyStyleOption(prefix, name) {
+            const root = document.documentElement;
+            [...root.classList]
+                .filter(cls => cls.startsWith(prefix + '-'))
+                .forEach(cls => root.classList.remove(cls));
+            root.classList.add(prefix + '-' + name);
+            localStorage.setItem(prefix, name);
+        }
+
+        /**
+         * Fills one dropdown from styles.css and wires up changes.
+         * Falls back to the default (or the first option) if the saved one no longer exists.
+         * @param {string} selectId - The <select> element id
+         * @param {string} prefix - Class prefix, e.g. 'theme'
+         * @param {string} fallback - Default option name
+         */
+        function initializeStylePicker(selectId, prefix, fallback) {
+            const select = document.getElementById(selectId);
+            const options = getStyleOptions(prefix);
+            if (options.length === 0) {
+                select.hidden = true;
+                if (select.previousElementSibling) select.previousElementSibling.hidden = true; // its icon
+                return;
+            }
+
+            options.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name
+                    .split('-')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+                select.appendChild(option);
+            });
+
+            const saved = localStorage.getItem(prefix);
+            const current = options.includes(saved) ? saved
+                : options.includes(fallback) ? fallback
+                : options[0];
+            select.value = current;
+            applyStyleOption(prefix, current);
+
+            select.addEventListener('change', () => {
+                applyStyleOption(prefix, select.value);
+                select.blur(); // So the '/' search shortcut works right away
+            });
+        }
+
         /**
          * Loads links from the server API
          * @async
@@ -948,6 +1047,9 @@
 
         // Initialize search functionality
         initializeSearch();
+
+        // Populate the theme dropdown from styles.css
+        initializeStylePicker('theme-select', 'theme', DEFAULT_THEME);
     </script>
 </body>
 </html>

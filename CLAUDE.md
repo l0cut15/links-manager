@@ -69,7 +69,7 @@ cp data/links.json data/links.json.backup
 - URL normalization (auto-adds http:// prefix)
 - Keyboard support (Enter key to save)
 - Responsive grid layout with Font Awesome icons
-- Dark theme interface
+- Theme picker (top-right dropdown): lists every `.theme-<name>` class used in `styles.css` (the original 4 plus 20 palette themes). Original themes set the layout variables (`--primary-color`, ...) directly; palette themes set short tokens (`--bg`, `--panel`, `--accent`, ...) that a `:root` block maps onto them, so tokens/mapping live on `:root`, not `body`. Choice saved per browser in localStorage (default `midnight`, also hardcoded in the inline `<head>` script); class set on `<html>` before first paint. Don't use the `theme-` prefix for other classes
 - Real-time persistence via API calls
 
 ### Keyboard Shortcuts

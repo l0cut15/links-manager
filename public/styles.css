@@ -1,3 +1,45 @@
+/* =====================================================================
+   Home Server portal styles
+
+   Themes: the picker (top right) lists every `.theme-<name>` class used in
+   this file, so adding a theme is just adding a block. Don't give any other
+   class a `theme-` prefix or it will be listed too. The selected class is set
+   on <html>.
+
+   Two kinds of theme live here:
+   - The original four (modern, cyberpunk, dark, nature) set the layout's
+     variables (--primary-color, --card-background, ...) directly.
+   - The palette themes at the bottom set the short tokens below (--bg,
+     --panel, --accent, ...), which are mapped onto the layout's variables.
+   ===================================================================== */
+
+/* ---------- palette tokens: defaults (= Midnight) + mapping ----------
+   On :root, before the original themes, so their own values win. */
+:root {
+  --bg: #1a1d29;
+  --bg-img: none;
+  --panel: #222637;
+  --tile-hover: #2d3348;
+  --tile-border: #2f3549;
+  --text: #d6d9e6;
+  --accent: #9aa3f5;
+  --accent-soft: rgba(154, 163, 245, .14);
+  --ok: #7fc8a9;
+  --err: #e88d8d;
+
+  --primary-color: var(--accent);
+  --hover-color: var(--accent);
+  --background-color: var(--bg);
+  --card-background: var(--panel);
+  --text-color: var(--text);
+  --border-color: var(--tile-border);
+  --success-color: var(--ok);
+  --error-color: var(--err);
+  --link-hover-bg: var(--tile-hover);
+  --link-hover-color: var(--accent);
+  --on-primary: var(--bg);           /* text on accent-coloured buttons */
+}
+
 /* Modern Theme */
 .theme-modern {
     --primary-color: #6366f1;
@@ -8,6 +50,8 @@
     --border-color: #e5e7eb;
     --success-color: #10b981;
     --error-color: #ef4444;
+    --link-hover-bg: #eef2ff;
+    --on-primary: #fff;
 }
 
 /* Cyberpunk Theme */
@@ -23,6 +67,7 @@
     --link-hover-bg: #2a1b54;
     --link-hover-color: #00ffff;
     --neon-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+    --on-primary: #fff;
 }
 
 .theme-cyberpunk .links-list {
@@ -100,10 +145,15 @@
     --error-color: #f87171;
     --link-hover-bg: #2d3748;
     --link-hover-color: #ff9933;
+    --on-primary: #fff;
 }
 
 .theme-dark .action-button {
     color: #d1d5db;
+}
+
+.theme-dark h1 {
+    color: #ff9933; /* same orange as the link hover */
 }
 
 /* Nature Theme */
@@ -116,6 +166,8 @@
     --border-color: #d1fae5;
     --success-color: #059669;
     --error-color: #dc2626;
+    --link-hover-bg: #ecfdf5;
+    --on-primary: #fff;
 }
 
 /* Common styles that work with all themes */
@@ -125,6 +177,8 @@ body {
     margin: 0 auto;
     padding: 20px;
     background-color: var(--background-color);
+    background-image: var(--bg-img);
+    background-attachment: fixed;
     color: var(--text-color);
     transition: all 0.3s ease;
 }
@@ -237,7 +291,7 @@ h1 {
     width: 100%;
     padding: 14px;
     background: var(--primary-color);
-    color: white;
+    color: var(--on-primary);
     border: none;
     border-radius: 8px;
     font-size: 1rem;
@@ -574,7 +628,7 @@ h1 {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     padding: 2px 8px;
-    background: rgba(129, 140, 248, 0.1);
+    background: var(--accent-soft);
     border-radius: 4px;
     flex-shrink: 0;
 }
@@ -630,4 +684,270 @@ h1 {
         font-size: 11px;
         flex-wrap: wrap;
     }
+}
+
+/* Theme picker (top right) */
+.style-switcher {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-color);
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.style-switcher:hover,
+.style-switcher:focus-within {
+    opacity: 1;
+}
+
+.style-switcher select {
+    background: var(--card-background);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font: inherit;
+    cursor: pointer;
+}
+
+.style-switcher select:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 1px;
+}
+
+/* =====================================================================
+   PALETTE THEMES. Body text targets ~7-12:1 contrast, never pure
+   #000 / #fff, desaturated accents. Only the colour tokens (and --bg-img)
+   are used by this layout; font/radius/shadow tokens are kept for reference.
+   ===================================================================== */
+
+/* 01 Midnight: your current indigo, with hierarchy fixed */
+.theme-midnight { /* defaults above */ }
+
+/* 02 Nord */
+.theme-nord {
+  --bg: #2e3440; --panel: #353c4a; --panel-border: #3f4757;
+  --tile: #3b4252; --tile-hi: #434c5e; --tile-hover: #434c5e; --tile-border: #444d5f;
+  --text: #d8dee9; --muted: #8893a8; --accent: #88c0d0; --accent-soft: rgba(136,192,208,.14);
+  --ok: #a3be8c; --warn: #ebcb8b; --err: #bf616a;
+  --font: 'IBM Plex Sans', system-ui, sans-serif;
+  --shadow: 0 1px 2px rgba(0,0,0,.22), 0 3px 10px rgba(0,0,0,.14);
+  --shadow-hover: 0 4px 8px rgba(0,0,0,.25), 0 10px 24px rgba(0,0,0,.2);
+}
+
+/* 03 Gruvbox Material */
+.theme-gruvbox {
+  --bg: #282828; --panel: #32302f; --panel-border: #3c3836;
+  --tile: #3c3836; --tile-hi: #45403d; --tile-hover: #45403d; --tile-border: #3f3b38;
+  --text: #e2d3ad; --muted: #a89984; --accent: #d8a657; --accent-soft: rgba(216,166,87,.14);
+  --ok: #a9b665; --warn: #e78a4e; --err: #ea6962;
+  --font: 'IBM Plex Sans', system-ui, sans-serif;
+}
+
+/* 04 Solarized Dark (text lifted to base1 for contrast) */
+.theme-solarized-dark {
+  --bg: #002b36; --panel: #073642; --panel-border: #0d4452;
+  --tile: #073642; --tile-hi: #0b4352; --tile-hover: #0b4352; --tile-border: #0e4250;
+  --text: #a7b5b5; --muted: #6f878c; --accent: #2aa198; --accent-soft: rgba(42,161,152,.16);
+  --ok: #859900; --warn: #b58900; --err: #dc322f;
+}
+
+/* 05 Everforest */
+.theme-everforest {
+  --bg: #2d353b; --panel: #343f44; --panel-border: #3d484d;
+  --tile: #3d484d; --tile-hi: #475258; --tile-hover: #475258; --tile-border: #445055;
+  --text: #d3c6aa; --muted: #9da9a0; --accent: #a7c080; --accent-soft: rgba(167,192,128,.15);
+  --ok: #a7c080; --warn: #dbbc7f; --err: #e67e80;
+  --radius: 12px;
+  --shadow: 0 1px 2px rgba(0,0,0,.18), 0 4px 12px rgba(0,0,0,.12);
+  --shadow-hover: 0 6px 18px rgba(0,0,0,.22);
+}
+
+/* 06 Kanagawa */
+.theme-kanagawa {
+  --bg: #1f1f28; --panel: #2a2a37; --panel-border: #363646;
+  --tile: #2a2a37; --tile-hi: #363646; --tile-hover: #363646; --tile-border: #363646;
+  --text: #dcd7ba; --muted: #9a9890; --accent: #7e9cd8; --accent-soft: rgba(126,156,216,.15);
+  --ok: #98bb6c; --warn: #e6c384; --err: #e46876;
+  --font: 'IBM Plex Sans', system-ui, sans-serif;
+  --panel-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 10px 30px rgba(0,0,0,.28);
+  --shadow-hover: 0 2px 8px rgba(0,0,0,.25);
+}
+
+/* 07 Rose Pine */
+.theme-rose-pine {
+  --bg: #191724; --panel: #1f1d2e; --panel-border: #2a2740;
+  --tile: #26233a; --tile-hi: #2f2c45; --tile-hover: #2f2c45; --tile-border: #2c2942;
+  --text: #dbd8ee; --muted: #908caa; --accent: #ebbcba; --accent-soft: rgba(235,188,186,.13);
+  --ok: #9ccfd8; --warn: #f6c177; --err: #eb6f92;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(0,0,0,.3);
+  --shadow-hover: 0 8px 22px rgba(0,0,0,.35);
+}
+
+/* 08 Tokyo Night Storm */
+.theme-tokyo-night {
+  --bg: #24283b; --panel: #1f2335; --panel-border: #2b3050;
+  --tile: #292e42; --tile-hi: #2f3549; --tile-hover: #2f3549; --tile-border: #2f334d;
+  --text: #c0caf5; --muted: #7f89b4; --accent: #7aa2f7; --accent-soft: rgba(122,162,247,.14);
+  --ok: #9ece6a; --warn: #e0af68; --err: #f7768e;
+  --panel-shadow: 0 12px 34px rgba(0,0,0,.28);
+  --shadow-hover: 0 2px 6px rgba(0,0,0,.25);
+}
+
+/* 09 Catppuccin Mocha */
+.theme-catppuccin {
+  --bg: #1e1e2e; --panel: #181825; --panel-border: #2a2a3c;
+  --tile: #313244; --tile-hi: #3a3b52; --tile-hover: #3a3b52; --tile-border: #393a50;
+  --text: #cdd6f4; --muted: #9399b2; --accent: #b4befe; --accent-soft: rgba(180,190,254,.13);
+  --ok: #a6e3a1; --warn: #f9e2af; --err: #f38ba8;
+  --radius: 12px;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 10px rgba(0,0,0,.15);
+  --shadow-hover: 0 6px 20px rgba(0,0,0,.35);
+}
+
+/* 10 Zenburn (mono) */
+.theme-zenburn {
+  --bg: #3f3f3f; --panel: #383838; --panel-border: #4a4a4a;
+  --tile: #434343; --tile-hi: #4f4f4f; --tile-hover: #4a4a4a; --tile-border: #474747;
+  --text: #dcdccc; --muted: #9f9f8f; --accent: #f0dfaf; --accent-soft: rgba(240,223,175,.12);
+  --ok: #7f9f7f; --warn: #dfaf8f; --err: #cc9393;
+  --font: 'JetBrains Mono', ui-monospace, monospace;
+  --radius: 4px;
+}
+
+/* 11 Amber Phosphor: low-blue CRT, scanlines and vignette for depth */
+.theme-amber-crt {
+  --bg: #120d05;
+  --bg-img:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.22) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at 50% 40%, rgba(255,170,60,.07), transparent 65%);
+  --panel: #19120a; --panel-border: #3a2a12;
+  --panel-shadow: inset 0 0 40px rgba(0,0,0,.65), 0 0 24px rgba(255,160,50,.05);
+  --tile: #20180c; --tile-hi: #2a1f0f; --tile-hover: #2a1f0f; --tile-border: #33240f;
+  --text: #e8a84c; --muted: #9c7236; --accent: #ffc46b; --accent-soft: rgba(255,196,107,.12);
+  --ok: #d8b24c; --warn: #ffcf7a; --err: #ff7a4a;
+  --font: 'IBM Plex Mono', ui-monospace, monospace;
+  --radius: 3px;
+  --text-glow: 0 0 2px rgba(232,168,76,.35);
+}
+
+/* 12 Graphite Rack (pairs with layout-rack) */
+.theme-rack {
+  --bg: #16181b; --bg-img: linear-gradient(180deg, #1c1f23, #121417);
+  --panel: #0e1012; --panel-border: #24272b; --panel-shadow: 0 10px 30px rgba(0,0,0,.5);
+  --rail: #2a2e33; --hole: #08090a;
+  --tile: #2a2e34; --tile-hi: #353a41; --tile-hover: #353a41; --tile-border: #30343a;
+  --text: #cfd3d8; --muted: #7d848d; --accent: #6fd3a0; --accent-soft: rgba(111,211,160,.12);
+  --ok: #4fd18b; --led: #4fd18b; --warn: #e5b45a; --err: #e2665f;
+  --head-font: 'Rajdhani', system-ui, sans-serif;
+}
+
+/* 13 Neumorphic Slate: extruded / pressed surfaces */
+.theme-neumorph {
+  --bg: #2b2f36; --panel: #2b2f36; --panel-border: transparent;
+  --panel-shadow: 6px 6px 14px #1e2126, -6px -6px 14px #383d46;
+  --tile: #2b2f36; --tile-hi: #30353d; --tile-hover: #2b2f36; --tile-border: transparent;
+  --text: #d2d6dc; --muted: #8b929c; --accent: #7fb4e0; --accent-soft: rgba(127,180,224,.12);
+  --ok: #86c5a0; --warn: #ddb96f; --err: #e08a8a;
+  --radius: 14px;
+  --shadow: 5px 5px 12px #1f2227, -5px -5px 12px #373c45;
+  --shadow-hover: inset 3px 3px 7px #1f2227, inset -3px -3px 7px #373c45;
+  --lift: 0px;
+}
+
+/* 14 Aurora Glass: frosted panels over a soft, desaturated aurora */
+.theme-glass {
+  --bg: #11151c;
+  --bg-img:
+    radial-gradient(60% 50% at 12% 8%, rgba(94,129,172,.34), transparent 70%),
+    radial-gradient(50% 50% at 88% 18%, rgba(136,110,170,.26), transparent 70%),
+    radial-gradient(60% 60% at 60% 105%, rgba(80,150,140,.24), transparent 70%);
+  --panel: rgba(30,36,48,.42); --panel-border: rgba(255,255,255,.08);
+  --panel-shadow: 0 8px 32px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.07);
+  --tile: rgba(255,255,255,.05); --tile-hi: rgba(255,255,255,.08); --tile-hover: rgba(255,255,255,.08); --tile-border: rgba(255,255,255,.07);
+  --text: #dfe4ec; --muted: #98a2b3; --accent: #9fd3c7; --accent-soft: rgba(159,211,199,.14);
+  --ok: #9fd3a8; --warn: #e6c98a; --err: #e8949a;
+  --blur: blur(18px) saturate(140%);
+  --radius: 12px;
+  --shadow: inset 0 1px 0 rgba(255,255,255,.06);
+  --shadow-hover: inset 0 1px 0 rgba(255,255,255,.1), 0 6px 20px rgba(0,0,0,.25);
+}
+
+/* 15 Retro Keycaps (pairs with layout-keys) */
+.theme-keycaps {
+  --bg: #26272a; --bg-img: radial-gradient(ellipse at 50% 0%, #313236, transparent 70%);
+  --panel: #18191b; --panel-border: #202124; --panel-shadow: 0 12px 30px rgba(0,0,0,.45);
+  --tile: #46484d; --tile-hi: #55575d; --tile-hover: #4d4f54; --tile-border: #3c3e42;
+  --text: #e6e2d6; --muted: #9a978e; --accent: #e0916f; --accent-soft: rgba(224,145,111,.14);
+  --key-accent: #c86f4e;
+  --ok: #9bbf7a; --warn: #e0b562; --err: #d9705f;
+  --head-font: 'Space Grotesk', system-ui, sans-serif;
+}
+
+/* 16 Paper: warm light for daytime, stacked-sheet depth */
+.theme-paper {
+  --bg: #efe7d6; --panel: #f8f2e4; --panel-border: #e0d4b9;
+  --panel-shadow: 0 1px 0 #e0d4b9, 0 5px 0 -2px #f3ebda, 0 6px 0 -2px #ddd0b3, 0 10px 20px rgba(90,70,40,.08);
+  --tile: #fbf6ea; --tile-hi: #fffaf0; --tile-hover: #f0e6d0; --tile-border: #e7dcc4;
+  --text: #433a2c; --muted: #857760; --accent: #9a5b2b; --accent-soft: rgba(154,91,43,.1);
+  --ok: #5f7f3a; --warn: #b07a1f; --err: #a8432f;
+  --font: 'IBM Plex Sans', system-ui, sans-serif;
+  --shadow: 0 1px 0 rgba(90,70,40,.08), 0 2px 6px rgba(90,70,40,.07);
+  --shadow-hover: 0 3px 10px rgba(90,70,40,.12);
+  --rail: #d8ccb2; --hole: #b7a98d;
+}
+
+/* 17 Solarized Light */
+.theme-solarized-light {
+  --bg: #fdf6e3; --panel: #f5efdc; --panel-border: #e6dfc8;
+  --tile: #f8f1dd; --tile-hi: #fffaea; --tile-hover: #eee8d5; --tile-border: #e6dfc8;
+  --text: #4d5f66; --muted: #8a9a9b; --accent: #268bd2; --accent-soft: rgba(38,139,210,.1);
+  --ok: #859900; --warn: #b58900; --err: #dc322f;
+  --shadow: 0 1px 2px rgba(88,110,117,.1);
+  --shadow-hover: 0 4px 12px rgba(88,110,117,.14);
+  --rail: #e0d9c2; --hole: #c4bca4;
+}
+
+/* 18 Graphite Mono: near greyscale, one warm accent */
+.theme-graphite {
+  --bg: #18191b; --panel: #1e1f22; --panel-border: #2a2b2e;
+  --tile: #222326; --tile-hi: #2a2b2f; --tile-hover: #2a2b2f; --tile-border: #292a2d;
+  --text: #c8c9cc; --muted: #77797e; --accent: #e0a458; --accent-soft: rgba(224,164,88,.12);
+  --ok: #8fbf8f; --warn: #e0a458; --err: #d97a72;
+  --radius: 6px;
+}
+
+/* 19 Oceanic Depth: layered elevation */
+.theme-oceanic {
+  --bg: #0f1a24; --bg-img: linear-gradient(180deg, #12202c, #0b141b);
+  --panel: #152532; --panel-border: #1d3242;
+  --panel-shadow: 0 14px 40px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05);
+  --tile: #1b2e3d; --tile-hi: #223849; --tile-hover: #213748; --tile-border: #1f3444;
+  --text: #cbd9e3; --muted: #7f97a8; --accent: #6cc4c4; --accent-soft: rgba(108,196,196,.13);
+  --ok: #7fcf9f; --warn: #e3bf74; --err: #e5868a;
+  --radius: 10px;
+  --shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 4px rgba(0,0,0,.25), 0 8px 16px rgba(0,0,0,.18);
+  --shadow-hover: inset 0 1px 0 rgba(255,255,255,.06), 0 6px 12px rgba(0,0,0,.3), 0 16px 30px rgba(0,0,0,.25);
+}
+
+/* 20 Blueprint: drafting grid, dashed outlines */
+.theme-blueprint {
+  --bg: #13263a;
+  --bg-img:
+    linear-gradient(rgba(160,200,235,.06) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, rgba(160,200,235,.06) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(rgba(160,200,235,.04) 1px, transparent 1px) 0 0 / 120px 120px;
+  --panel: rgba(19,38,58,.85); --panel-border: rgba(160,200,235,.28);
+  --tile: rgba(24,48,72,.75); --tile-hi: rgba(32,60,88,.8); --tile-hover: rgba(34,64,94,.85); --tile-border: rgba(160,200,235,.24);
+  --border-style: dashed;
+  --text: #d5e4f0; --muted: #87a6c0; --accent: #f2d48a; --accent-soft: rgba(242,212,138,.12);
+  --ok: #9ed6a8; --warn: #f2d48a; --err: #f0948c;
+  --font: 'IBM Plex Mono', ui-monospace, monospace;
+  --radius: 2px;
 }
