@@ -42,7 +42,7 @@ This application serves as a centralized dashboard for managing links to various
 ### Backend
 - **Framework**: Express.js server
 - **Port**: 3003
-- **Data Storage**: JSON file (`links.json`)
+- **Data Storage**: JSON file (`data/links.json`, override with `LINKS_FILE`), written atomically
 - **Module System**: ES modules
 
 ### Frontend
@@ -56,7 +56,7 @@ This application serves as a centralized dashboard for managing links to various
 links-manager/
 ├── server.js              # Express server with API endpoints
 ├── package.json           # Dependencies and scripts
-├── links.json             # Link data storage
+├── data/links.json        # Link data storage
 ├── public/
 │   ├── index.html         # Main application interface
 │   ├── styles.css         # Application styling
@@ -70,7 +70,7 @@ links-manager/
 ### GET /api/links
 Retrieves all links from storage.
 
-**Response**: Array of link objects
+**Response**: Array of link objects. The `ETag` header carries the current version.
 ```json
 [
   {
@@ -86,6 +86,8 @@ Saves updated links array to storage with comprehensive validation.
 
 **Request Body**: Array of link objects (same format as GET response)
 
+**Headers**: `If-Match: <ETag>` (optional). If sent and it doesn't match the stored version, the save is rejected with 409, so a stale tab can't overwrite newer changes. The frontend always sends it.
+
 **Validation Rules**:
 - Names: 1-100 characters, no duplicates
 - URLs: Valid HTTP/HTTPS format, supports localhost, IPs, .local domains
@@ -95,6 +97,8 @@ Saves updated links array to storage with comprehensive validation.
 **Response**: 
 - 200 OK with success message on valid data
 - 400 Bad Request with detailed error message for validation failures
+- 409 Conflict if `If-Match` doesn't match the stored version
+- Successful responses include the new `ETag`
 
 ### GET /
 Serves the main homepage interface.
@@ -143,7 +147,7 @@ Links are stored as JSON objects with the following structure:
 2. **Using Docker directly**:
    ```bash
    docker build -t links-manager .
-   docker run -d -p 3003:3003 -v $(pwd)/links.json:/app/links.json links-manager
+   docker run -d -p 3003:3003 -v $(pwd)/data:/app/data links-manager
    ```
 
 3. **Access the application** at `http://your-server:3003`
@@ -216,7 +220,7 @@ The application is designed for local network use with services typically runnin
 To create manual backups of your link data:
 ```bash
 # Backup link data
-cp links.json links.json.backup
+cp data/links.json data/links.json.backup
 
 # Backup entire application
 cp -r /var/www/node/links-manager /var/www/node/links-manager.backup
@@ -248,8 +252,8 @@ kill -9 <PID>
 
 ### Links Not Saving
 1. Check server console for error messages
-2. Verify `links.json` file permissions (should be writable by the server process)
-3. Ensure the server has write access to the directory
+2. Verify the `data/` directory is writable by the server process (saves write a temp file there, then rename it over `links.json`)
+3. If you see "Links were changed in another tab or device", another open copy of the page saved first; the page reloads the latest list
 4. Check for validation errors in the browser console
 5. Verify all required fields (name, url, category) are provided
 

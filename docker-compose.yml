@@ -7,12 +7,11 @@ services:
     ports:
       - "3003:3003"
     volumes:
-      # Mount links.json for data persistence
-      - ./links.json:/app/links.json
+      # Mount the data directory (not just links.json) so saves can be written
+      # atomically via temp file + rename, which a single-file bind mount can't do
+      - ./data:/app/data
       # Mount public directory so static files are served without rebuilding
       - ./public:/app/public
-      # Optional: mount entire data directory if you want to expand storage
-      # - ./data:/app/data
     environment:
       - NODE_ENV=production
     user: "1000:1000"  # Run as brettsamuel user

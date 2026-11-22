@@ -140,6 +140,8 @@
         let searchSelectedIndex = -1;
         let searchFilteredLinks = [];
         let statusTimer = null;
+        let linksVersion = null;            // ETag of the server copy this page is based on
+        let saveQueue = Promise.resolve();  // Saves run one at a time so each sends the latest version
 
         /**
          * Validates a URL format
@@ -863,11 +865,12 @@
          */
         async function loadLinks() {
             try {
-                const response = await fetch('/api/links');
+                const response = await fetch('/api/links', { cache: 'no-store' });
                 if (!response.ok) throw new Error('Failed to load: ' + response.status);
                 const data = await response.json();
                 if (!Array.isArray(data)) throw new Error('Unexpected response');
                 links = data;
+                linksVersion = response.headers.get('ETag');
                 renderLinks();
             } catch (error) {
                 showStatusMessage('Error loading links', true, null);
@@ -875,24 +878,41 @@
         }
 
         /**
-         * Saves the current links array to the server
+         * Queues a save of the current links array to the server.
+         * Saves are serialized so each one carries the version returned by the previous one.
+         * @returns {Promise<void>}
+         */
+        function saveLinks() {
+            saveQueue = saveQueue.then(doSaveLinks, doSaveLinks);
+            return saveQueue;
+        }
+
+        /**
+         * Sends the links array to the server. If another tab or device saved in the
+         * meantime the server answers 409; we then reload its copy rather than overwrite it.
          * @async
          */
-        async function saveLinks() {
+        async function doSaveLinks() {
             try {
                 const linksToSave = links
                     .filter(link => link.name !== '' || link.url !== '')
                     .map(({ name, url, category }) => ({ name, url, category }));
-                
+
+                const headers = { 'Content-Type': 'application/json' };
+                if (linksVersion) headers['If-Match'] = linksVersion;
+
                 const response = await fetch('/api/links', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers,
                     body: JSON.stringify(linksToSave)
                 });
-                
-                
+
                 if (response.ok) {
+                    linksVersion = response.headers.get('ETag');
                     showStatusMessage('Links saved successfully');
+                } else if (response.status === 409) {
+                    await loadLinks();
+                    showStatusMessage('Links were changed in another tab or device. Reloaded the latest version; please redo your last change.', true, null);
                 } else {
                     const body = await response.json().catch(() => ({}));
                     throw new Error(body.error || 'Failed to save: ' + response.status);

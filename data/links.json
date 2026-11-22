@@ -1,5 +1,10 @@
 [
   {
+    "name": "IT Tools",
+    "url": "https://it-tools.local.zeroart.net/",
+    "category": "media"
+  },
+  {
     "name": "Audio Bookshelf",
     "url": "https://bookshelf.local.zeroart.net/audiobookshelf",
     "category": "media"
@@ -15,13 +20,8 @@
     "category": "media"
   },
   {
-    "name": "Grist",
-    "url": "https://grist.local.zeroart.net",
-    "category": "media"
-  },
-  {
-    "name": "IT Tools",
-    "url": "https://it-tools.local.zeroart.net/",
+    "name": "JellyFin",
+    "url": "https://jellyfin.local.zeroart.net",
     "category": "media"
   },
   {
@@ -40,19 +40,9 @@
     "category": "servers"
   },
   {
-    "name": "KVM Proxmox",
-    "url": "https://kvm-proxmox.local.zeroart.net",
-    "category": "servers"
-  },
-  {
     "name": "Home Assistant",
     "url": "https://haos.local.zeroart.net",
     "category": "servers"
-  },
-  {
-    "name": "JellyFin",
-    "url": "https://jellyfin.local.zeroart.net",
-    "category": "media"
   },
   {
     "name": "Homebridge",
@@ -67,11 +57,6 @@
   {
     "name": "Subscriptions",
     "url": "https://subs.local.zeroart.net/login.php",
-    "category": "media"
-  },
-  {
-    "name": "N8N",
-    "url": "https://n8n.local.zeroart.net",
     "category": "media"
   },
   {
@@ -95,7 +80,7 @@
     "category": "infrastructure"
   },
   {
-    "name": "Docker Updates",
+    "name": "Docker Updates WUD",
     "url": "https://wud.local.zeroart.net",
     "category": "infrastructure"
   },
@@ -150,13 +135,23 @@
     "category": "infrastructure"
   },
   {
-    "name": "OpenWebUI",
-    "url": "https://openwebui.local.zeroart.net",
+    "name": "Silo",
+    "url": "https://silo.local.zeroart.net",
     "category": "servers"
   },
   {
-    "name": "KVM - nobara",
+    "name": "KVM Proxmox",
+    "url": "https://kvm-proxmox.local.zeroart.net",
+    "category": "servers"
+  },
+  {
+    "name": "KVM (nobara)",
     "url": "https://kvm-linux.local.zeroart.net",
+    "category": "servers"
+  },
+  {
+    "name": "(OpenWebUI)",
+    "url": "https://openwebui.local.zeroart.net",
     "category": "servers"
   },
   {
@@ -200,6 +195,16 @@
     "category": "media"
   },
   {
+    "name": "(Grist)",
+    "url": "https://grist.local.zeroart.net",
+    "category": "media"
+  },
+  {
+    "name": "(N8N)",
+    "url": "https://n8n.local.zeroart.net",
+    "category": "media"
+  },
+  {
     "name": "Claw",
     "url": "https://claw.local.zeroart.net",
     "category": "websites"
@@ -218,5 +223,10 @@
     "name": "(Go Access)",
     "url": "http://10.10.22.22:7880/",
     "category": "infrastructure"
+  },
+  {
+    "name": "Fitness Tracker",
+    "url": "https://claude.ai/artifact/2szrytLJmpBS1zbHyFwVV2",
+    "category": "websites"
   }
 ]

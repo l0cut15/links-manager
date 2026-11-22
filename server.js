@@ -1,12 +1,15 @@
 import express from 'express';
 import { promises as fs } from 'fs';
+import { createHash } from 'crypto';
+import path from 'path';
 
 const app = express();
-const PORT = 3003;
-const LINKS_FILE = 'links.json';
+const PORT = Number(process.env.PORT) || 3003;
+const LINKS_FILE = process.env.LINKS_FILE || path.join('data', 'links.json');
 const HTTP_STATUS = {
     OK: 200,
     BAD_REQUEST: 400,
+    CONFLICT: 409,
     INTERNAL_SERVER_ERROR: 500
 };
 
@@ -22,11 +25,55 @@ app.use(express.static('public'));
  * @returns {Promise<void>}
  */
 async function initLinksFile() {
+    await fs.mkdir(path.dirname(LINKS_FILE), { recursive: true });
     try {
         await fs.access(LINKS_FILE);
     } catch {
-        await fs.writeFile(LINKS_FILE, JSON.stringify([]));
+        await writeFileAtomic(LINKS_FILE, JSON.stringify([]));
     }
+}
+
+/**
+ * Computes a version tag for the stored file contents.
+ * Clients send it back in If-Match so stale saves can be rejected.
+ * @param {string} data - Raw file contents
+ * @returns {string} Quoted ETag value
+ */
+function versionOf(data) {
+    return '"' + createHash('sha1').update(data).digest('hex') + '"';
+}
+
+/**
+ * Writes a file atomically: write to a temp file in the same directory,
+ * fsync it, then rename over the target. A crash mid-write leaves the
+ * previous file intact instead of a truncated one.
+ * @param {string} file - Target path
+ * @param {string} data - Contents to write
+ */
+async function writeFileAtomic(file, data) {
+    const tmp = `${file}.${process.pid}.${Date.now()}.tmp`;
+    const handle = await fs.open(tmp, 'w');
+    try {
+        await handle.writeFile(data);
+        await handle.sync();
+    } finally {
+        await handle.close();
+    }
+    try {
+        await fs.rename(tmp, file);
+    } catch (error) {
+        await fs.unlink(tmp).catch(() => {});
+        throw error;
+    }
+}
+
+// Serializes read-check-write cycles so two concurrent POSTs can't both
+// pass the version check against the same file contents.
+let writeQueue = Promise.resolve();
+function withWriteLock(fn) {
+    const run = writeQueue.then(fn, fn);
+    writeQueue = run.catch(() => {});
+    return run;
 }
 
 /**
@@ -39,7 +86,10 @@ async function initLinksFile() {
 app.get('/api/links', async (req, res) => {
     try {
         const data = await fs.readFile(LINKS_FILE, 'utf8');
-        res.json(JSON.parse(data));
+        const links = JSON.parse(data);
+        res.set('Cache-Control', 'no-store');
+        res.set('ETag', versionOf(data));
+        res.json(links);
     } catch (error) {
         res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Error reading links' });
     }
@@ -87,7 +137,9 @@ function isValidCategory(category) {
 
 /**
  * POST /api/links - Saves an array of links to the JSON file
- * Validates that the input is an array and each link has required fields
+ * Validates that the input is an array and each link has required fields.
+ * If an If-Match header is sent, the save is rejected with 409 unless it
+ * matches the current file's version (returned as ETag by GET and POST).
  * @async
  * @param {Object} req - Express request object with links array in body
  * @param {Object} res - Express response object
@@ -168,7 +220,24 @@ app.post('/api/links', async (req, res) => {
             }
         }
         
-        await fs.writeFile(LINKS_FILE, JSON.stringify(links, null, 2));
+        const output = JSON.stringify(links, null, 2);
+        const result = await withWriteLock(async () => {
+            // Reject saves based on an outdated copy (e.g. another tab or device saved since)
+            const ifMatch = req.get('If-Match');
+            if (ifMatch) {
+                const current = await fs.readFile(LINKS_FILE, 'utf8');
+                if (versionOf(current) !== ifMatch) return { conflict: true };
+            }
+            await writeFileAtomic(LINKS_FILE, output);
+            return { version: versionOf(output) };
+        });
+
+        if (result.conflict) {
+            return res.status(HTTP_STATUS.CONFLICT).json({
+                error: 'Links were changed elsewhere since this page loaded'
+            });
+        }
+        res.set('ETag', result.version);
         res.json({ message: 'Links saved successfully' });
     } catch (error) {
         console.error('Error saving links:', error);

@@ -10,7 +10,7 @@ This is a personal homepage links manager - a simple Node.js web application tha
 
 - **Backend**: Express.js server (`server.js`) running on port 3003
 - **Frontend**: Vanilla HTML/CSS/JavaScript served from `public/` directory
-- **Data Storage**: JSON file (`links.json`) for persistent link storage
+- **Data Storage**: JSON file (`data/links.json`, override with `LINKS_FILE` env var), written atomically (temp file + fsync + rename)
 - **Module System**: ES modules (`"type": "module"` in package.json)
 - **Deployment**: Can run directly with Node.js or via Docker container
 
@@ -18,7 +18,7 @@ This is a personal homepage links manager - a simple Node.js web application tha
 
 - `server.js`: Main Express server with REST API endpoints for link management
 - `public/index.html`: Primary frontend interface with drag-and-drop functionality
-- `links.json`: Data store containing link configurations with name/URL pairs
+- `data/links.json`: Data store containing link configurations with name/URL pairs
 - `public/styles.css`: Main styling for the interface
 - Additional HTML files in `public/`: Various utility pages (sudoku, diagrams, etc.)
 
@@ -38,18 +38,20 @@ docker-compose logs -f            # View container logs
 docker-compose restart            # Restart container
 
 # Backup data
-cp links.json links.json.backup
+cp data/links.json data/links.json.backup
 ```
 
 ## API Endpoints
 
-- `GET /api/links` - Retrieve all links from storage
+- `GET /api/links` - Retrieve all links from storage; `ETag` header carries the file's version (sha1)
 - `POST /api/links` - Save updated links array to storage with validation
   - Validates names (1-100 chars, no duplicates)
   - Validates URLs (valid HTTP/HTTPS format, supports localhost, IPs, .local domains)
   - Validates categories (must be 'servers', 'infrastructure', 'media', or 'websites')
   - Maximum 1000 links allowed
   - Returns 400 with detailed error messages on validation failure
+  - Optional `If-Match` header: returns 409 if it doesn't match the stored version (optimistic concurrency so stale tabs can't clobber newer saves). Frontend always sends it, serializes its saves, and reloads on 409
+  - Read-check-write is serialized server-side with an in-process lock
 - `GET /` - Serve main homepage interface
 
 ## Frontend Features
@@ -106,10 +108,10 @@ The application includes Docker support for containerized deployment:
 - **Dockerfile**: Node.js 18 Alpine-based image with security best practices
 - **docker-compose.yml**: Complete deployment configuration
   - Runs as non-root user (UID 1000)
-  - Mounts `links.json` for data persistence
+  - Mounts the `data/` directory for persistence (a directory, not the single file, so atomic rename works)
   - Includes health checks
   - Auto-restarts unless stopped manually
-- Data persists through the mounted `links.json` volume
+- Data persists through the mounted `data/` volume
 
 ## Validation Rules
 
